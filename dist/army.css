@@ -1,2 +1,9 @@
 .hero > header{background:#fff;color:#293022;box-shadow:0 1px 0 #dfe4d2}
 .hero > header .brand small{color:#65704d}
+.hero-content{z-index:2;text-shadow:0 2px 18px rgba(0,0,0,.72)}
+.hero-content:before{content:'';position:absolute;inset:-34px -40px -26px -34px;background:linear-gradient(90deg,rgba(12,23,15,.48),transparent 72%);z-index:-1;border-radius:18px}
+.admin-thumb{width:120px;height:90px;object-fit:cover;margin:12px 8px 0 0}
+.share-gallery-head{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;background:#fff}
+.share-gallery-head .brand{font-size:20px}
+.signup-only{display:none}
+@media(max-width:760px){.hero-content:before{inset:-22px -18px -18px -18px}.share-gallery-head{gap:15px;align-items:flex-start;flex-direction:column}}

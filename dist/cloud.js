@@ -20963,4 +20963,28 @@ ${suffix}`;
       throw error;
     }
   };
+  state.auth = {
+    signIn: async (email, password) => state.result(client.auth.signInWithPassword({ email, password })),
+    signUp: async (email, password, displayName, sellerCategory) => {
+      const result = await state.result(client.auth.signUp({ email, password, options: { data: { display_name: displayName, seller_category: sellerCategory } } }));
+      if (result.user) await state.result(client.rpc("ensure_profile", { display_name: displayName, seller_category: sellerCategory }));
+      return result;
+    },
+    signOut: () => client.auth.signOut()
+  };
+  state.profile = async function() {
+    if (!state.user) return null;
+    const data = await state.result(client.from("profiles").select("*").eq("id", state.user.id).maybeSingle());
+    return data;
+  };
+  state.listings = {
+    mine: async () => state.result(client.from("properties").select("*,property_private(*),property_photos(*)").eq("owner_id", state.user.id).order("created_at", { ascending: false })),
+    save: async (listing, privateData, id) => state.result(client.rpc("save_listing", { listing_id: id || crypto.randomUUID(), listing_data: listing, private_data: privateData })),
+    submit: async (id) => state.result(client.from("properties").update({ status: "pending" }).eq("id", id).eq("owner_id", state.user.id).select().single()),
+    pending: async () => state.result(client.from("properties").select("*,property_private(*),property_photos(*)").eq("status", "pending").order("created_at", { ascending: true })),
+    approve: async (id) => state.result(client.from("properties").update({ status: "published" }).eq("id", id).select().single()),
+    reject: async (id, reason) => state.result(client.from("properties").update({ status: "declined", description: reason }).eq("id", id).select().single()),
+    publicBySlug: async (slug) => state.result(client.rpc("public_property_by_slug", { slug })).then((rows) => rows?.[0] || null)
+  };
+  state.publicPhotoUrl = (path) => `${config.supabaseUrl || "https://xqturhxjnwjzakfkypxi.supabase.co"}/storage/v1/object/public/property-photos/${path}`;
 })();
