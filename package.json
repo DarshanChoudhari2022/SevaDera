@@ -1,0 +1,1 @@
+{"name":"seva-dera","private":true,"scripts":{"build":"esbuild src/cloud.js --bundle --format=iife --outfile=dist/cloud.js"},"dependencies":{"@supabase/supabase-js":"2.119.0","esbuild":"0.28.2"}}
