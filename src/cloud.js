@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
 // A publishable key identifies the project. Database policies authorize every operation.
-const client = createClient('https://xqturhxjnwjzakfkypxi.supabase.co', 'sb_publishable_MgT_dGTakqNODIhD30mvwA_AkHz3oti');
+const config = globalThis.__SEVADERA_CONFIG__ || {};
+const client = createClient(config.supabaseUrl || 'https://xqturhxjnwjzakfkypxi.supabase.co', config.supabasePublishableKey || 'sb_publishable_MgT_dGTakqNODIhD30mvwA_AkHz3oti');
 window.seva = { client, user: null, staff: false, ready: false };
 const state = window.seva;
 

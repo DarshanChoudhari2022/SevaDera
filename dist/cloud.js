@@ -2062,12 +2062,12 @@ ${cause.stack}`;
       else this.url.searchParams.append(column, `ov.{${value.join(",")}}`);
       return this;
     }
-    textSearch(column, query, { config, type } = {}) {
+    textSearch(column, query, { config: config2, type } = {}) {
       let typePart = "";
       if (type === "plain") typePart = "pl";
       else if (type === "phrase") typePart = "ph";
       else if (type === "websearch") typePart = "w";
-      const configPart = config === void 0 ? "" : `(${config})`;
+      const configPart = config2 === void 0 ? "" : `(${config2})`;
       this.url.searchParams.append(column, `${typePart}fts${configPart}.${query}`);
       return this;
     }
@@ -7046,7 +7046,7 @@ Suggested solution: ${env.workaround}`;
         const postgres_changes = (_b = (_a = this.bindings.postgres_changes) === null || _a === void 0 ? void 0 : _a.map((r) => r.filter)) !== null && _b !== void 0 ? _b : [];
         const presence_enabled = !!this.bindings[REALTIME_LISTEN_TYPES.PRESENCE] && this.bindings[REALTIME_LISTEN_TYPES.PRESENCE].length > 0 || ((_c = this.params.config.presence) === null || _c === void 0 ? void 0 : _c.enabled) === true;
         const accessTokenPayload = {};
-        const config = Object.assign({ broadcast, presence: Object.assign(Object.assign({}, presence), { enabled: presence_enabled }), postgres_changes, private: isPrivate }, postgres_changes_options ? { postgres_changes_options } : {});
+        const config2 = Object.assign({ broadcast, presence: Object.assign(Object.assign({}, presence), { enabled: presence_enabled }), postgres_changes, private: isPrivate }, postgres_changes_options ? { postgres_changes_options } : {});
         if (this.socket.accessTokenValue) {
           accessTokenPayload.access_token = this.socket.accessTokenValue;
         }
@@ -7054,7 +7054,7 @@ Suggested solution: ${env.workaround}`;
           callback === null || callback === void 0 ? void 0 : callback(REALTIME_SUBSCRIBE_STATES.CHANNEL_ERROR, normalizeChannelError(reason));
         });
         this._onClose(() => callback === null || callback === void 0 ? void 0 : callback(REALTIME_SUBSCRIBE_STATES.CLOSED));
-        this.updateJoinPayload(Object.assign({ config }, accessTokenPayload));
+        this.updateJoinPayload(Object.assign({ config: config2 }, accessTokenPayload));
         this._updateFilterMessage();
         const joinTimeout = (postgres_changes_options === null || postgres_changes_options === void 0 ? void 0 : postgres_changes_options.wait) && postgres_changes.length > 0 ? Math.max(timeout, ((_d = postgres_changes_options.timeout) !== null && _d !== void 0 ? _d : DEFAULT_POSTGRES_CHANGES_WAIT_TIMEOUT) + POSTGRES_CHANGES_WAIT_ERROR_GRACE) : timeout;
         this.channelAdapter.subscribe(joinTimeout).receive("ok", async ({ postgres_changes: postgres_changes2 }) => {
@@ -20914,7 +20914,8 @@ ${suffix}`;
   if (shouldShowDeprecationWarning()) console.warn("\u26A0\uFE0F  Node.js 20 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 22 or later. For more information, visit: https://github.com/orgs/supabase/discussions/45715");
 
   // src/cloud.js
-  var client = createClient("https://xqturhxjnwjzakfkypxi.supabase.co", "sb_publishable_MgT_dGTakqNODIhD30mvwA_AkHz3oti");
+  var config = globalThis.__SEVADERA_CONFIG__ || {};
+  var client = createClient(config.supabaseUrl || "https://xqturhxjnwjzakfkypxi.supabase.co", config.supabasePublishableKey || "sb_publishable_MgT_dGTakqNODIhD30mvwA_AkHz3oti");
   window.seva = { client, user: null, staff: false, ready: false };
   var state = window.seva;
   async function syncSession(session) {
