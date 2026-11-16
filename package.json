@@ -1,1 +1,1 @@
-{"name":"seva-dera","private":true,"scripts":{"build":"node scripts/build-config.mjs && esbuild src/cloud.js --bundle --format=iife --outfile=dist/cloud.js"},"dependencies":{"@supabase/supabase-js":"2.119.0","esbuild":"0.28.2"}}
+{"name":"seva-dera","private":true,"scripts":{"build":"node scripts/update-services.mjs && node scripts/build-config.mjs && esbuild src/cloud.js --bundle --format=iife --outfile=dist/cloud.js"},"dependencies":{"@supabase/supabase-js":"2.119.0","esbuild":"0.28.2"}}

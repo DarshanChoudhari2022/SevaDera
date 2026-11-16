@@ -80,7 +80,7 @@ create index enquiries_requester on public.enquiries(requester_id);
 create table public.service_requests (
  id uuid primary key default gen_random_uuid(),
  user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
- service text not null check (service in ('Home viewings','Packers & movers','A fresh start','Everyday essentials')),
+ service text not null check (service in ('Home viewings','Packers & movers','A fresh start','Everyday essentials','Mess & tiffin')),
  preferred_date date not null,
  notes text not null default '' check (char_length(notes) <= 2000),
  status text not null default 'requested' check (status in ('requested','contacted','completed','cancelled')),
