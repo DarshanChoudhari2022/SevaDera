@@ -7,5 +7,5 @@ Task 2: complete (commit 04d0a67, tests: `python scripts/_run_integration_once.p
 Task 3: complete (commit 04d0a67, tests: `node --check dist/app.js` + local seller route smoke check → PASS)
 Task 4: complete (commit 04d0a67, tests: protected admin route smoke check → PASS)
 Task 5: complete (commit 04d0a67, tests: public share/WhatsApp route code path + build → PASS)
-Task 6: in progress
+Task 6: complete (commits 04d0a67..3ecd601, tests: `npm run build`, `node --check dist/app.js`, Supabase integration PASS, production HTTP/CUA smoke checks PASS)
 
