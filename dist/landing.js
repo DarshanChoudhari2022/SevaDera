@@ -6780,6 +6780,18 @@
     }, { signal });
     context3 = gsapWithCSS.context(() => {
       if (reduced) return;
+      const hero = site.querySelector(".r-hero");
+      gsapWithCSS.to(hero, {
+        y: () => hero.offsetHeight * 0.8,
+        ease: "none",
+        scrollTrigger: {
+          trigger: site,
+          start: "top top",
+          end: () => "+=" + hero.offsetHeight,
+          scrub: true,
+          invalidateOnRefresh: true
+        }
+      });
       gsapWithCSS.from(".r-hero-copy, .r-hero-bottom", {
         x: -28,
         opacity: 0,
@@ -6796,8 +6808,8 @@
           (child) => !child.matches(".r-process-cards")
         );
         gsapWithCSS.from(content, {
-          x: index % 2 === 0 ? -24 : 24,
-          y: 28,
+          x: () => matchMedia("(max-width: 600px)").matches ? 0 : index % 2 === 0 ? -24 : 24,
+          y: () => matchMedia("(max-width: 600px)").matches ? 16 : 28,
           opacity: 0.5,
           duration: 0.8,
           stagger: 0.08,
@@ -6806,9 +6818,18 @@
           scrollTrigger: { trigger: section, start: "top 85%", once: true }
         });
       });
-      for (const heading of document.querySelectorAll(".r-reveal,.r-blur")) {
-        heading.innerHTML = heading.innerHTML.split(/(<br\s*\/?>|\s+)/).map((s) => s.trim() && !s.startsWith("<") ? `<span class="r-word">${s}</span>` : s).join("");
-        gsapWithCSS.from(heading.querySelectorAll(".r-word"), { opacity: 0.15, filter: "blur(5px)", y: 12, stagger: 0.045, duration: 0.7, clearProps: "all", scrollTrigger: { trigger: heading, start: "top 88%", once: true } });
+      for (const heading of site.querySelectorAll(".r-reveal,.r-blur")) {
+        heading.innerHTML = heading.innerHTML.split(/(<br\s*\/?>|\s+)/).map((word) => word.trim() && !word.startsWith("<") ? `<span class="r-word">${word}</span>` : word).join("");
+        const linked = heading.classList.contains("r-blur");
+        gsapWithCSS.from(heading.querySelectorAll(".r-word"), {
+          opacity: 0.25,
+          filter: "blur(5px)",
+          y: linked ? 0 : 12,
+          stagger: 0.045,
+          duration: 0.7,
+          ease: "none",
+          scrollTrigger: linked ? { trigger: heading, start: "top bottom", end: "top 40%", scrub: true } : { trigger: heading, start: "top 88%", once: true }
+        });
       }
       gsapWithCSS.utils.toArray(".r-image-card").forEach((el) => gsapWithCSS.from(el, { y: 45, opacity: 0, duration: 0.85, clearProps: "all", scrollTrigger: { trigger: el, start: "top 92%", once: true } }));
       gsapWithCSS.utils.toArray(".r-process-cards article").forEach((el, i) => {

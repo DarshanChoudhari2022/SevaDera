@@ -33,6 +33,16 @@ function mount(){context?.revert();events?.abort();events=new AbortController();
  document.querySelector('#r-start').addEventListener('submit',e=>{e.preventDefault();const email=document.querySelector('#r-email').value;location.hash='account';setTimeout(()=>{const field=document.querySelector('#auth-form [name=email]');if(field)field.value=email;},0);},{signal});
  const video=document.querySelector('video');const toggle=document.querySelector('.r-video-toggle');toggle.addEventListener('click',async()=>{if(video.paused){try{await video.play();toggle.textContent='Pause film';toggle.setAttribute('aria-label','Pause neighbourhood film');}catch{toggle.textContent='Try playing again';}}else{video.pause();toggle.textContent='Play film';toggle.setAttribute('aria-label','Play neighbourhood film');}},{signal});
  context=gsap.context(()=>{if(reduced)return;
+ const hero = site.querySelector('.r-hero');
+ gsap.to(hero, {
+   y: () => hero.offsetHeight * .8,
+   ease: 'none',
+   scrollTrigger: {
+     trigger: site, start: 'top top',
+     end: () => '+=' + hero.offsetHeight,
+     scrub: true, invalidateOnRefresh: true
+   }
+ });
  gsap.from('.r-hero-copy, .r-hero-bottom', {
    x: -28, opacity: 0, duration: .85, stagger: .12,
    ease: 'power2.out', clearProps: 'transform,opacity'
@@ -46,8 +56,8 @@ function mount(){context?.revert();events?.abort();events=new AbortController();
      !child.matches('.r-process-cards')
    );
    gsap.from(content, {
-     x: index % 2 === 0 ? -24 : 24,
-     y: 28,
+     x: () => matchMedia('(max-width: 600px)').matches ? 0 : index % 2 === 0 ? -24 : 24,
+     y: () => matchMedia('(max-width: 600px)').matches ? 16 : 28,
      opacity: .5,
      duration: .8,
      stagger: .08,
@@ -56,7 +66,18 @@ function mount(){context?.revert();events?.abort();events=new AbortController();
      scrollTrigger: { trigger: section, start: 'top 85%', once: true }
    });
  });
- for(const heading of document.querySelectorAll('.r-reveal,.r-blur')){heading.innerHTML=heading.innerHTML.split(/(<br\s*\/?>|\s+)/).map(s=>s.trim()&&!s.startsWith('<')?`<span class="r-word">${s}</span>`:s).join('');gsap.from(heading.querySelectorAll('.r-word'),{opacity:.15,filter:'blur(5px)',y:12,stagger:.045,duration:.7,clearProps:'all',scrollTrigger:{trigger:heading,start:'top 88%',once:true}});}
+ for (const heading of site.querySelectorAll('.r-reveal,.r-blur')) {
+   heading.innerHTML = heading.innerHTML.split(/(<br\s*\/?>|\s+)/)
+     .map(word => word.trim() && !word.startsWith('<') ? `<span class="r-word">${word}</span>` : word).join('');
+   const linked = heading.classList.contains('r-blur');
+   gsap.from(heading.querySelectorAll('.r-word'), {
+     opacity: .25, filter: 'blur(5px)', y: linked ? 0 : 12,
+     stagger: .045, duration: .7, ease: 'none',
+     scrollTrigger: linked
+       ? {trigger: heading, start: 'top bottom', end: 'top 40%', scrub: true}
+       : {trigger: heading, start: 'top 88%', once: true}
+   });
+ }
  gsap.utils.toArray('.r-image-card').forEach(el=>gsap.from(el,{y:45,opacity:0,duration:.85,clearProps:'all',scrollTrigger:{trigger:el,start:'top 92%',once:true}}));
  gsap.utils.toArray('.r-process-cards article').forEach((el,i)=>{gsap.to(el,{scale:1-i*.012,scrollTrigger:{trigger:el,start:'top 140px',end:'bottom top',scrub:true}});});
  ScrollTrigger.create({start:80,onUpdate:self=>document.querySelector('.r-nav')?.classList.toggle('is-scrolled',self.scroll()>80)});
