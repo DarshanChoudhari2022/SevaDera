@@ -1,0 +1,8 @@
+# SevaDera early-access handoff
+
+- Apply `supabase/migrations/202611170001_early_access.sql` to the intended Supabase project. Configure `SUPABASE_URL` and a current `SUPABASE_SERVICE_ROLE_KEY` in Vercel server environment settings. The latter belongs in server settings only. The app returns an error until the function and migration are available.
+- Run `npm run build`. Use Vercel Preview or Vercel Dev to test form submissions, since static previews cannot execute the API. Verify all three request types with synthetic data and confirm the saved rows in the dashboard. Configure who reviews requests, the response process, and lead retention and deletion before launch.
+- Configure a monitored support address, optional WhatsApp number, support hours and escalation process. Confirm published privacy, terms, cancellation and refund policies and actual verification checks. The site currently describes early-access practices and takes no payments.
+- Validate neighbourhood photos, amenities, rental ranges and route times locally before publishing factual guides. Current photos and listing prices are illustrative and the neighbourhood selector is schematic, with external map links.
+- Confirm owner and provider screening, partner coverage and commercial terms before advertising verified inventory, booking availability, timing targets, ratings or testimonials. Existing owner listing management is accessible through the owner CTA.
+- Connect a collector to the `seva:analytics` events or configure the Vercel Analytics client. The UI emits events without names, email addresses or phone numbers. Preview variants with `?headline=short&cta=short&form=short`. Experiment assignment and reporting require a collector.
