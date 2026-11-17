@@ -8,4 +8,6 @@ Task 3: complete (commit 04d0a67, tests: `node --check dist/app.js` + local sell
 Task 4: complete (commit 04d0a67, tests: protected admin route smoke check → PASS)
 Task 5: complete (commit 04d0a67, tests: public share/WhatsApp route code path + build → PASS)
 Task 6: complete (commits 04d0a67..3ecd601, tests: `npm run build`, `node --check dist/app.js`, Supabase integration PASS, production HTTP/CUA smoke checks PASS)
+Final review: self-review (reviewer agent unavailable due usage limit); fresh build, integration, and production deployment checks passed.
+Final: minor (deferred): Public approved-photo bucket is a deliberate shareability tradeoff; paths remain UUID-based and public share RPC discloses only approved listing paths.
 
