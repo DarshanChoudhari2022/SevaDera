@@ -76,10 +76,10 @@ state.listings = {
   approve: async (id) => state.result(client.from('properties').update({status:'published'}).eq('id',id).select().single()),
   archive: async (id) => state.result(client.from('properties').update({status:'archived'}).eq('id',id).select().single()),
   reject: async (id, reason) => state.result(client.from('properties').update({status:'declined',description:reason}).eq('id',id).select().single()),
-  publicBySlug: async (slug) => state.result(client.rpc('marketplace_listings',{kind:null,slug})).then(rows=>rows?.[0] || null)
+  publicBySlug: async (slug) => state.result(client.rpc('marketplace_public_details',{kind:null,slug})).then(rows=>rows?.[0] || null)
 };
 state.marketplace = {
-  feed: kind => state.result(client.rpc('marketplace_listings', { kind })),
+  feed: kind => state.result(client.rpc('marketplace_public_details', { kind })),
   stats: () => state.result(client.rpc('marketplace_stats')),
   visit: (slug, visitor) => state.result(client.rpc('record_marketplace_visit', { slug, visitor })),
   supportInbox: () => state.result(client.rpc('staff_support_inbox')),

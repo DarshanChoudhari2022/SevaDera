@@ -203,7 +203,7 @@ body:has(.sd) { padding: 0; max-width: none; background: #fff; }
 @media (max-width: 680px) {
   .sd-welcome h1 { font-size: clamp(2rem, 8.8vw, 3.3rem); }
   .sd-checklist ol { gap: 1rem; }
-  #homes-preview > .sd-grid {
+  #sd-home-listings > .sd-grid {
     display: grid;
     grid-template-columns: none;
     grid-auto-flow: column;
@@ -213,6 +213,6 @@ body:has(.sd) { padding: 0; max-width: none; background: #fff; }
     scroll-snap-type: x mandatory;
     padding: .3rem .25rem .65rem;
   }
-  #homes-preview .sd-property { scroll-snap-align: start; }
+  #sd-home-listings .market-card { scroll-snap-align: start; }
   #move-services .sd-grid { gap: 0; }
 }

@@ -9,12 +9,6 @@
   var cardGrid = (items, cls = "") => `<div class="sd-grid ${cls}">${items.map(([title, copy]) => `<article class="sd-card"><h3>${title}</h3><p>${copy}</p></article>`).join("")}</div>`;
   var formEnd = (label) => `<label class="sd-trap" aria-hidden="true">Website<input name="website" tabindex="-1" autocomplete="off"></label><label class="sd-consent"><input type="checkbox" name="consent" required> I agree to be contacted about this request.</label><button class="sd-btn">${label}</button><p class="sd-status" role="status"></p>`;
   var navLinks = '<a href="#pune-checklist">Posting checklist</a><a href="#homes">Rooms & flats</a><a href="#move-services">Tiffin & move-in</a><a href="#items">Household items</a>';
-  var photo = (file, alt) => `<img loading="lazy" src="assets/realtora/${file}" alt="${alt}" width="480" height="300">`;
-  var examples = [
-    ["Wanowrie", "2 BHK", "\u20B924,000", "\u20B948,000", "\u20B92,000", "Semi-furnished", "1,050 sq ft", "f453685bd78a198c.png", "as-101"],
-    ["Fatima Nagar", "3 BHK", "\u20B932,000", "\u20B964,000", "\u20B93,000", "Furnished", "1,420 sq ft", "447d63eb7aeb4a8d.png", "as-102"],
-    ["Wanwadi", "2 BHK", "\u20B922,000", "\u20B944,000", "\u20B92,000", "Unfurnished", "980 sq ft", "bfe7605f5221a4ba.png", "as-103"]
-  ];
   var escapeText = (value) => String(value).replace(/[&<>]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[char]);
   var homePage = (coordinator = "") => `<div class="sd">
 <a class="sd-skip" href="#main-content">Skip to content</a>
@@ -59,7 +53,12 @@
     </ol>
   </div>
 </section>
-<section class="sd-wrap" id="homes-preview"><h2>Rooms and flats for rent in Pune</h2><p>Looking around Wanwadi, Wanowrie, Fatima Nagar or Salunke Vihar? Tell us whether you need a room, PG or family flat. The samples below show the details to compare.</p><div class="sd-grid">${examples.map(([area, bhk, rent, deposit, fee, furnishing, size, file, id]) => `<article class="sd-card sd-property">${photo(file, "Illustrative home exterior")}<p class="sd-note">Illustrative example \xB7 not a live listing</p><h3>${bhk} in ${area}</h3><p><strong>${rent} / month</strong> \xB7 ${size}<br>${deposit} deposit \xB7 ${fee} maintenance<br>${furnishing} \xB7 Parking and pets to confirm</p><p class="sd-note">Owner verification, floor plan, exact travel times and viewing slots would appear when confirmed.</p><div class="sd-actions"><button class="sd-btn sd-outline" data-area="${area}">Notify me about viewings</button><a href="#property/${id}">Sample details</a><button data-save="${id}" aria-pressed="false">Save</button><button data-share="${id}">Share</button></div></article>`).join("")}</div><p class="sd-status" id="sd-share-status" role="status"></p></section>
+<section class="sd-wrap" id="homes-preview">
+  <h2>Published rooms and flats in Pune</h2>
+  <p>Browse photos, neighbourhoods and rent. Open a listing to see all available photos and ask our team about a viewing.</p>
+  <div id="sd-home-listings" aria-live="polite"><p>Loading homes\u2026</p></div>
+  <div class="sd-actions"><a class="sd-btn" href="#homes">Browse all homes</a><a class="sd-btn sd-outline" href="#match" data-need="Rental home">Request help finding a home</a></div>
+</section>
 <section class="sd-band" id="move-services">
   <div class="sd-wrap">
     <h2>Meals from day one and help getting the home ready</h2>
@@ -111,6 +110,7 @@
   function mount() {
     const site = document.querySelector(".sd");
     if (!site) return;
+    window.mountHomeListings?.(site.querySelector("#sd-home-listings"));
     const final = site.querySelector("#sd-lead");
     const menu = site.querySelector(".sd-menu");
     menu.onclick = () => menu.setAttribute("aria-expanded", String(menu.getAttribute("aria-expanded") !== "true"));
@@ -138,46 +138,7 @@
         section.focus({ preventScroll: true });
         section.scrollIntoView();
       }
-      if (target.dataset.area) {
-        track("neighbourhood_interest", { area: target.dataset.area });
-        final.elements.area.value = target.dataset.area;
-        final.scrollIntoView();
-        final.elements.name.focus({ preventScroll: true });
-      }
-      if (target.dataset.save) {
-        const key = "sd-saved-" + target.dataset.save;
-        const saved = target.getAttribute("aria-pressed") === "true";
-        try {
-          saved ? localStorage.removeItem(key) : localStorage.setItem(key, "1");
-        } catch {
-        }
-        target.setAttribute("aria-pressed", String(!saved));
-        target.textContent = saved ? "Save" : "Saved";
-      }
-      if (target.dataset.share) {
-        const url = new URL(location.href);
-        url.hash = "property/" + target.dataset.share;
-        const status = site.querySelector("#sd-share-status");
-        try {
-          if (navigator.share) await navigator.share({ url: url.href, title: "Sainik Space illustrative home" });
-          else {
-            await navigator.clipboard.writeText(url.href);
-            status.textContent = "Sample link copied.";
-          }
-        } catch {
-          status.textContent = url.href;
-        }
-      }
     });
-    for (const button of site.querySelectorAll("[data-save]")) {
-      try {
-        if (localStorage.getItem("sd-saved-" + button.dataset.save)) {
-          button.setAttribute("aria-pressed", "true");
-          button.textContent = "Saved";
-        }
-      } catch {
-      }
-    }
     site.addEventListener("change", (event) => {
       if (event.target.name === "needs") track("service_selection", { service: event.target.value, selected: event.target.checked });
     });

@@ -15,7 +15,9 @@
 .market-page .button { justify-self: start; }
 .market-card { overflow: hidden; border: 1px solid #d6ddd2; border-radius: 12px; }
 .market-card a { display: block; }
-.market-card h3 { margin: 1rem; }
+.market-card-body { padding: 1rem; overflow-wrap: anywhere; }
+.market-card-body h3 { margin: 0 0 .35rem; }
+.market-card-body p { margin: 0; }
 .market-photo { display: block; width: 100%; height: auto; border-radius: 8px; }
 .market-card .market-photo { aspect-ratio: 4 / 3; object-fit: cover; border-radius: 0; }
 .market-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 310px), 1fr)); gap: 1rem; }
@@ -31,8 +33,23 @@
 .visually-hidden { position: absolute; clip-path: inset(50%); width: 1px; height: 1px; overflow: hidden; }
 .staff-login [role=status]:empty, .guest-enquiry [role=status]:empty, #listing-status:empty { display: none; }
 .market-page .listing-row .actions { flex-shrink: 0; }
+.staff-access { max-width: 760px; margin-inline: auto; }
+.staff-access h2, .staff-editor h2 { font-size: clamp(1.9rem, 4vw, 2.85rem); }
+.staff-editor .dashboard { grid-template-columns: minmax(0,1fr) minmax(0,1.5fr); }
+.staff-editor .dashboard > * { min-width: 0; overflow-wrap: anywhere; }
+.listing-public-fields { margin: 0; padding: 1rem; border: 1px solid #d6ddd2; border-radius: 8px; min-width: 0; }
+.listing-public-fields label { display: block; margin-top: .75rem; }
+.listing-description { white-space: pre-wrap; overflow-wrap: anywhere; }
+.market-page .listing-row > div, .staff-editor .listing-row > span { min-width: 0; overflow-wrap: anywhere; }
+.staff-editor #listing-status a { text-decoration: underline; }
+@media (max-width: 900px) {
+  .staff-editor .dashboard { grid-template-columns: 1fr; }
+  .staff-editor #listing-form { grid-row: 1; }
+}
 @media (max-width: 680px) {
   .market-page { gap: .9rem; }
-  .market-page .panel { padding: 1rem; }
+  .market-page .panel, .staff-access .panel, .staff-editor .panel { padding: 1rem; }
   .market-page .listing-row .actions { flex-shrink: 1; }
+  .staff-access input, .staff-editor :is(input,select,textarea), .guest-enquiry :is(input,select,textarea) { font-size: 16px; }
+  .staff-editor .actions .button, .market-page .actions .button { min-height: 44px; white-space: normal; }
 }
