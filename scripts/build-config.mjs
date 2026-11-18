@@ -6,8 +6,8 @@ const supabasePublishableKey = process.env.SUPABASE_PUBLISHABLE_KEY || 'sb_publi
 const coordinatorName = (process.env.SEVADERA_COORDINATOR_NAME || '').trim().slice(0, 80);
 await writeFile('dist/config.js', `globalThis.__SEVADERA_CONFIG__=${JSON.stringify({supabaseUrl,supabasePublishableKey,coordinatorName})};\n`, 'utf8');
 const index = (await readFile('dist/index.html', 'utf8')).replace(/\?v=[a-f0-9]{12}(?=")/g, '');
-const title = 'Pune Rooms, Flats, Mess & Tiffin for Army Families | Sainik Space';
-const description = 'Looking for a room, PG, flat, mess or tiffin in Pune? Request housing, meals and move-in support around Wanwadi and nearby areas through Sainik Space.';
+const title = 'Posted to Pune? Rooms, Tiffin & Move-in Help | Sainik Space';
+const description = 'Plan your Pune posting with a free checklist and local help finding rooms, flats and tiffin in Wanwadi and Wanowrie. For defence, police, medical and government families.';
 const siteUrl = 'https://aangansetu.vercel.app/';
 const structured = JSON.stringify({
   '@context': 'https://schema.org',

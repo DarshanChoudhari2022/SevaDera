@@ -8,7 +8,7 @@
   var moveFields = `<label>Posting city<input name="city" value="Pune" readonly></label><label>Move date<input name="date" type="date"></label>${select("Family size", "size", ["1", "2", "3", "4", "5+"])}${select("Monthly budget", "budget", ["Under \u20B920,000", "\u20B920,000\u2013\u20B930,000", "\u20B930,000\u2013\u20B945,000", "\u20B945,000+"])}${select("Property type", "property", ["1 BHK", "2 BHK", "3 BHK", "Independent home", "PG / room"])}`;
   var cardGrid = (items, cls = "") => `<div class="sd-grid ${cls}">${items.map(([title, copy]) => `<article class="sd-card"><h3>${title}</h3><p>${copy}</p></article>`).join("")}</div>`;
   var formEnd = (label) => `<label class="sd-trap" aria-hidden="true">Website<input name="website" tabindex="-1" autocomplete="off"></label><label class="sd-consent"><input type="checkbox" name="consent" required> I agree to be contacted about this request.</label><button class="sd-btn">${label}</button><p class="sd-status" role="status"></p>`;
-  var navLinks = '<a href="#homes">Rooms & flats</a><a href="#move-services">Mess, tiffin & moving</a><a href="#items">Household items</a>';
+  var navLinks = '<a href="#pune-checklist">Posting checklist</a><a href="#homes">Rooms & flats</a><a href="#move-services">Tiffin & move-in</a><a href="#items">Household items</a>';
   var photo = (file, alt) => `<img loading="lazy" src="assets/realtora/${file}" alt="${alt}" width="480" height="300">`;
   var examples = [
     ["Wanowrie", "2 BHK", "\u20B924,000", "\u20B948,000", "\u20B92,000", "Semi-furnished", "1,050 sq ft", "f453685bd78a198c.png", "as-101"],
@@ -19,18 +19,19 @@
   var homePage = (coordinator = "") => `<div class="sd">
 <a class="sd-skip" href="#main-content">Skip to content</a>
 <header class="sd-head">
-<div class="sd-bar"><a class="sd-brand" href="#home">Sainik Space<span>.</span></a><button type="button" class="sd-menu" aria-expanded="false" aria-controls="sd-nav">Menu</button><nav id="sd-nav" aria-label="Main navigation">${navLinks}</nav><a class="sd-btn sd-top" href="#match">Find a home</a></div></header>
+<div class="sd-bar"><a class="sd-brand" href="#home">Sainik Space<span>.</span></a><button type="button" class="sd-menu" aria-expanded="false" aria-controls="sd-nav">Menu</button><nav id="sd-nav" aria-label="Main navigation">${navLinks}</nav><a class="sd-btn sd-top" href="#match">Plan my move</a></div></header>
 <main id="main-content" tabindex="-1">
 <section class="sd-welcome" aria-labelledby="sd-welcome-title">
   <div class="sd-wrap sd-welcome-inner">
     <div class="sd-welcome-copy">
-      <p class="sd-welcome-label">Relocation support \xB7 Pune</p>
-      <h1 id="sd-welcome-title">Home, <span class="sd-duty">wherever duty takes you.</span></h1>
-      <p>Find rooms and flats for rent, mess and tiffin options, and move-in support in Pune. For Army personnel, other service families, doctors and civil servants.</p>
+      <p class="sd-welcome-label">Home, wherever duty takes you.</p>
+      <h1 id="sd-welcome-title">Posted to Pune? <span class="sd-duty">Let\u2019s get you settled.</span></h1>
+      <p>Find a room or flat, arrange your first week of tiffin, and get local help with move-in. One Pune coordinator for defence families, police personnel, doctors and government employees.</p>
       <div class="sd-actions">
-        <a class="sd-btn" href="#match" data-event="hero_cta">Plan your move <span aria-hidden="true">\u2197</span></a>
-        <a class="sd-btn sd-outline" href="#homes">Browse live rentals</a>
+        <a class="sd-btn" href="#match" data-event="hero_cta">Plan my Pune move <span aria-hidden="true">\u2197</span></a>
+        <a class="sd-btn sd-outline" href="#match" data-need="Tiffin & meals" data-event="hero_tiffin">Check tiffin delivery</a>
       </div>
+      <p class="sd-note sd-coverage">Starting in Wanwadi and Wanowrie. Ask about Fatima Nagar and Salunke Vihar.</p>
     </div>
     <figure class="sd-welcome-art">
       <img src="assets/sevadera-service-team.png" width="1536" height="1024" fetchpriority="high" decoding="async" alt="3D-style illustration of an army service member, a doctor and a civil servant">
@@ -43,18 +44,29 @@
     <h2 id="sd-coordinator">${coordinator ? `Meet ${escapeText(coordinator)}, your local coordinator.` : "A local contact for your move to Wanwadi."}</h2>
   </div>
   <div>
-    <p>Tell us what you need before you arrive. Your coordinator will check which rooms or flats are available, help arrange a viewing, and confirm local tiffin prices and delivery coverage.</p>
-    <a class="sd-btn" href="#match">Ask the Wanwadi team</a>
+    <p>Share your arrival date, budget and preferred area. We\u2019ll check with owners and local providers and send you the options and costs. Choose what you want help with before committing.</p>
+    <a class="sd-btn sd-outline" href="#pune-checklist">Open the Pune posting checklist</a>
+  </div>
+</section>
+<section class="sd-band sd-checklist" id="pune-checklist" aria-labelledby="sd-checklist-title">
+  <div class="sd-wrap">
+    <h2 id="sd-checklist-title">Your Pune posting checklist</h2>
+    <p>Use this free checklist from the day you get your orders through your first week in Pune.</p>
+    <ol class="sd-grid">
+      <li><h3>When your posting is confirmed</h3><p>Set an arrival window and budget for rent, deposit, travel and first-week meals. Decide whether you need a room, PG or family flat.</p></li>
+      <li><h3>Before you arrive</h3><p>Confirm the rent and deposit with the owner. Book a viewing, ask about handover, and check tiffin coverage for the address.</p></li>
+      <li><h3>On move-in day</h3><p>Check the keys, utilities and condition of the home. Save the owner\u2019s contact and confirm your first meal delivery window.</p></li>
+    </ol>
   </div>
 </section>
 <section class="sd-wrap" id="homes-preview"><h2>Rooms and flats for rent in Pune</h2><p>Looking around Wanwadi, Wanowrie, Fatima Nagar or Salunke Vihar? Tell us whether you need a room, PG or family flat. The samples below show the details to compare.</p><div class="sd-grid">${examples.map(([area, bhk, rent, deposit, fee, furnishing, size, file, id]) => `<article class="sd-card sd-property">${photo(file, "Illustrative home exterior")}<p class="sd-note">Illustrative example \xB7 not a live listing</p><h3>${bhk} in ${area}</h3><p><strong>${rent} / month</strong> \xB7 ${size}<br>${deposit} deposit \xB7 ${fee} maintenance<br>${furnishing} \xB7 Parking and pets to confirm</p><p class="sd-note">Owner verification, floor plan, exact travel times and viewing slots would appear when confirmed.</p><div class="sd-actions"><button class="sd-btn sd-outline" data-area="${area}">Notify me about viewings</button><a href="#property/${id}">Sample details</a><button data-save="${id}" aria-pressed="false">Save</button><button data-share="${id}">Share</button></div></article>`).join("")}</div><p class="sd-status" id="sd-share-status" role="status"></p></section>
 <section class="sd-band" id="move-services">
   <div class="sd-wrap">
-    <h2>Mess, tiffin and move-in essentials</h2>
+    <h2>Meals from day one and help getting the home ready</h2>
     ${cardGrid([
-    ["Mess & tiffin in Pune", "Ask for local mess options, daily tiffin delivery or a monthly meal plan near your new home."],
-    ["Moving & cleaning", "Request help with movers, packing and cleaning before you move in."],
-    ["Home setup", "Get help finding internet, utility, furniture rental and repair options."]
+    ["Mess & tiffin in Pune", "Ask about a trial tiffin or a weekly or monthly plan. We\u2019ll confirm the menu, price and delivery window for your address before you order."],
+    ["Moving & cleaning", "Ask about packing, moving and cleaning. We\u2019ll confirm availability and share costs before you commit."],
+    ["Home setup", "Get help checking internet, utilities, furniture rentals and repairs around your move date."]
   ])}
     <a class="sd-btn" href="#match" data-need="Tiffin & meals">Request mess or tiffin options</a>
   </div>
@@ -87,7 +99,7 @@
       </nav>
     </div>
     <div class="sd-footer-bottom">
-      <small>\xA9 ${(/* @__PURE__ */ new Date()).getFullYear()} Sainik Space \xB7 Early access</small>
+      <small>\xA9 ${(/* @__PURE__ */ new Date()).getFullYear()} Sainik Space \xB7 Independent Pune relocation service</small>
       <a href="#main-content">Back to top <span aria-hidden="true">\u2191</span></a>
     </div>
   </div>

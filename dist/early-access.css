@@ -129,6 +129,7 @@ body:has(.sd) { padding: 0; max-width: none; background: #fff; }
 }
 .sd-welcome-copy > p:not(.sd-welcome-label) { max-width: 40ch; }
 .sd-welcome .sd-actions { margin-bottom: 0; }
+.sd-welcome .sd-coverage { margin: .85rem 0 0; max-width: 46ch; }
 .sd-welcome .sd-actions span { margin-left: .5rem; }
 .sd-welcome-art {
   position: relative;
@@ -175,6 +176,16 @@ body:has(.sd) { padding: 0; max-width: none; background: #fff; }
 }
 
 .sd-duty { display: inline-block; color: var(--rust); }
+.sd-checklist ol {
+  margin: 1.5rem 0 0;
+  padding-left: 1.5rem;
+}
+.sd-checklist li {
+  border-top: 1px solid #a9b695;
+  padding-top: 1rem;
+}
+.sd-checklist li::marker { color: var(--rust); font-weight: 700; }
+.sd-checklist li p { margin-bottom: 0; }
 .sd-form-more > summary {
   min-height: 44px;
   padding: .85rem 0;
@@ -191,6 +202,7 @@ body:has(.sd) { padding: 0; max-width: none; background: #fff; }
 }
 @media (max-width: 680px) {
   .sd-welcome h1 { font-size: clamp(2rem, 8.8vw, 3.3rem); }
+  .sd-checklist ol { gap: 1rem; }
   #homes-preview > .sd-grid {
     display: grid;
     grid-template-columns: none;
