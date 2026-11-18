@@ -5,7 +5,7 @@ const path = require('node:path');
 const { JSDOM } = require(path.join(process.env.SMOKE_NODE_MODULES, 'jsdom'));
 
 async function main() {
-  const { site, email, password, photoPath, local } = JSON.parse(fs.readFileSync(0, 'utf8'));
+  const { site, email, password, photoPath, local, draftTitle } = JSON.parse(fs.readFileSync(0, 'utf8'));
   const html = await (await fetch(site)).text();
   const dom = new JSDOM(html, {url:site + '/#admin', runScripts:'outside-only'});
   const { window } = dom;
@@ -48,6 +48,16 @@ async function main() {
   login.querySelector('button[type=submit],button:not([type])').click();
   await waitFor(() => window.seva.staff, 'staff authentication');
   window.location.hash = 'owner';
+  const posted = [];
+  const config = window.__SEVADERA_CONFIG__;
+  const headers = {apikey:config.supabasePublishableKey,'Content-Type':'application/json'};
+  const publicFeed = async (kind, slug) => {
+    const response = await fetch(config.supabaseUrl + '/rest/v1/rpc/marketplace_public_details', {
+      method:'POST', headers, body:JSON.stringify({kind, ...(slug && {slug})})
+    });
+    assert.equal(response.status,200);
+    return response.json();
+  };
   for (const [kind, title] of [['home','Demo — editor rental'],['item','Demo — editor cupboard']]) {
     const form = await waitFor(() => document.querySelector('#listing-form'), 'listing editor');
     Object.assign(form.elements.listing_kind,{value:kind});
@@ -59,13 +69,9 @@ async function main() {
     const link = await waitFor(() => document.querySelector('#listing-status a[href^="#share/"]'), kind + ' editor publish');
     assert.match(link.getAttribute('href'), /^#share\/[0-9a-f-]{36}$/);
     const id = link.getAttribute('href').split('/')[1];
-    const config = window.__SEVADERA_CONFIG__;
-    const headers = {apikey:config.supabasePublishableKey,'Content-Type':'application/json'};
-    const feed = await fetch(config.supabaseUrl + '/rest/v1/rpc/marketplace_public_details', {
-      method:'POST', headers, body:JSON.stringify({kind})
-    });
-    assert.equal(feed.status,200);
-    const published = (await feed.json()).find(row => row.id === id);
+    assert.ok(!posted.some(row => row.id === id), 'Publishing a new listing must not reuse a previous ID');
+    posted.push({kind,id,title});
+    const published = (await publicFeed(kind)).find(row => row.id === id);
     assert.equal(published?.public_title,title);
     const response = await fetch(config.supabaseUrl + '/storage/v1/object/sign/property-photos/' + published.photos[0], {
       method:'POST', headers, body:JSON.stringify({expiresIn:60})
@@ -78,6 +84,17 @@ async function main() {
     console.log(kind + ': staff editor, signed-out feed, and uploaded photo verified');
     selectedPhoto = null;
   }
+  if (draftTitle) {
+    const form = document.querySelector('#listing-form');
+    form.elements.listing_kind.value = 'home';
+    form.elements.listing_kind.dispatchEvent(new window.Event('change',{bubbles:true}));
+    for (const [name,value] of Object.entries({title:draftTitle,rent:'18000',
+      exact_address:'Synthetic test address',contact_phone:'0000000000'})) form.elements[name].value = value;
+    form.querySelector('[value=draft]').click();
+    await waitFor(() => document.querySelector('#listing-status')?.textContent.startsWith('Draft saved.'), 'retained draft save');
+    console.log('Private test draft saved through the staff editor');
+  }
+  for (const {kind,id,title} of posted) assert.equal((await publicFeed(kind,id))[0]?.public_title,title);
   dom.window.close();
   process.exit(0);
 }

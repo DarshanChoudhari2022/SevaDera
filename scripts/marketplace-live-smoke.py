@@ -16,7 +16,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--keep", action="store_true", help="Keep the run active for inspection until Enter is pressed")
     parser.add_argument("--editor", choices=["live", "local"], help="Post through the staff editor with a simulated stalled browser cache")
+    parser.add_argument("--retain-draft", action="store_true", help="Leave one labelled private draft in the verified staff account specified in the hidden credentials")
     args = parser.parse_args()
+    if args.retain_draft and not args.editor:
+        parser.error("--retain-draft requires --editor")
     credentials = json.loads(getpass.getpass("Project credentials JSON (hidden): "))
     site = "https://aangansetu.vercel.app"
     config = request(site + "/config.js", accept="text")
@@ -28,6 +31,7 @@ def main():
     if secret.startswith("ey"):
         service["Authorization"] = "Bearer " + secret
     owner_id = None
+    retained_id = None
     paths = []
     ids = []
     token = None
@@ -48,13 +52,31 @@ def main():
         photo_path = Path("dist/assets/realtora/127d5d37fa97e8c6.jpg")
         photo = photo_path.read_bytes()
         if args.editor:
+            draft_title = "TEST ONLY - Wanwadi form verification " + uuid.uuid4().hex[:8] if args.retain_draft else None
             try:
                 result = subprocess.run(["node", "scripts/marketplace-editor-smoke.cjs"],
                                         input=json.dumps({"site": site, "email": email, "password": password,
-                                                          "photoPath": str(photo_path), "local": args.editor == "local"}),
-                                        encoding="utf-8", timeout=40)
+                                                          "photoPath": str(photo_path), "local": args.editor == "local",
+                                                          "draftTitle": draft_title}),
+                                        encoding="utf-8", timeout=60)
                 if result.returncode:
                     raise RuntimeError("Staff editor smoke test failed")
+                if draft_title:
+                    with psycopg.connect(host="db." + base.split("//", 1)[1], dbname="postgres", user="postgres",
+                                         password=credentials["dbPassword"], sslmode="require", connect_timeout=10) as db:
+                        retained = db.execute(
+                            """update public.properties p set owner_id=u.id
+                               from auth.users u join private.staff_members s on s.user_id=u.id
+                               where lower(u.email)=lower(%s) and u.email_confirmed_at is not null
+                               and p.owner_id=%s and p.title=%s and p.status='draft'
+                               and not exists(select 1 from public.property_photos f where f.property_id=p.id)
+                               returning p.id,p.title,p.area,p.status""",
+                            (credentials["staffEmail"], owner_id, draft_title)
+                        ).fetchone()
+                        if retained is None:
+                            raise RuntimeError("Unable to retain the private draft for the verified staff account")
+                        retained_id = retained[0]
+                    print("Private draft retained in properties:", *retained, flush=True)
             finally:
                 with psycopg.connect(host="db." + base.split("//", 1)[1], dbname="postgres", user="postgres",
                                      password=credentials["dbPassword"], sslmode="require", connect_timeout=10) as db:
@@ -107,6 +129,11 @@ def main():
             finally:
                 request(base + "/auth/v1/admin/users/" + owner_id, "DELETE", service)
                 print("Removed temporary staff account and demo listings.", flush=True)
+                if retained_id:
+                    with psycopg.connect(host="db." + base.split("//", 1)[1], dbname="postgres", user="postgres",
+                                         password=credentials["dbPassword"], sslmode="require", connect_timeout=10) as db:
+                        assert db.execute("select status from public.properties where id=%s", (retained_id,)).fetchone() == ("draft",)
+                    print("Confirmed retained draft still exists after cleanup.", flush=True)
 
 
 def request(url, method="GET", headers=None, data=None, accept="json"):

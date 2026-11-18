@@ -254,6 +254,7 @@ document.addEventListener('click', async event => {
         const form = document.querySelector('#listing-form');
         if (next === 'deleted' && form.elements.id.value === id) {
           form.reset();
+          form.elements.id.value = '';
           syncListingFields();
           void clearListingDraft(cloud.user?.id);
         }
@@ -554,6 +555,7 @@ document.addEventListener('submit', async event => {
       }
       void clearListingDraft(cloud.user?.id);
       form.reset();
+      form.elements.id.value = '';
       syncListingFields();
       if (publish) {
         status.innerHTML = `Published. <a href="#share/${encodeURIComponent(id)}">View live listing</a>.`;
