@@ -42,9 +42,13 @@
 .listing-description { white-space: pre-wrap; overflow-wrap: anywhere; }
 .market-page .listing-row > div, .staff-editor .listing-row > span { min-width: 0; overflow-wrap: anywhere; }
 .staff-editor #listing-status a { text-decoration: underline; }
+.tiffin-cards .panel { display: grid; align-content: start; gap: .75rem; }
+.tiffin-cards h2, .staff-editor #tiffin-plan-form h2 { font-size: 1.25rem; margin: 0; }
+.staff-editor .listing-row { flex-wrap: wrap; }
+.staff-editor #tiffin-plan-form [role=status]:empty { display: none; }
 @media (max-width: 900px) {
   .staff-editor .dashboard { grid-template-columns: 1fr; }
-  .staff-editor #listing-form { grid-row: 1; }
+  .staff-editor #listing-form, .staff-editor #tiffin-plan-form { grid-row: 1; }
 }
 @media (max-width: 680px) {
   .market-page { gap: .9rem; }

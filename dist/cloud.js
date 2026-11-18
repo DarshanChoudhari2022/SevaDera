@@ -20918,19 +20918,33 @@ ${suffix}`;
   var client = createClient(config.supabaseUrl || "https://xqturhxjnwjzakfkypxi.supabase.co", config.supabasePublishableKey || "sb_publishable_MgT_dGTakqNODIhD30mvwA_AkHz3oti");
   window.seva = { client, user: null, staff: false, ready: false };
   var state = window.seva;
+  var sessionRevision = 0;
   async function syncSession(session) {
-    state.user = session?.user ?? null;
-    state.staff = false;
-    if (state.user) {
+    const revision = ++sessionRevision;
+    const previousUser = state.user?.id;
+    const previousStaff = state.staff;
+    const user = session?.user ?? null;
+    let staff = false;
+    if (user) {
       const result = await client.rpc("is_staff");
-      state.staff = result.data === true;
+      staff = result.data === true;
     }
+    if (revision !== sessionRevision) return;
+    state.user = user;
+    state.staff = staff;
+    const changed = !state.ready || previousUser !== state.user?.id || previousStaff !== state.staff;
     state.ready = true;
-    window.dispatchEvent(new Event("seva-session"));
+    if (changed) window.dispatchEvent(new Event("seva-session"));
   }
+  var staffSignInPending = false;
   client.auth.getSession().then(({ data }) => syncSession(data.session));
   client.auth.onAuthStateChange((event, session) => {
-    if (event !== "INITIAL_SESSION") setTimeout(() => syncSession(session), 0);
+    if (event !== "INITIAL_SESSION" && !(event === "SIGNED_IN" && staffSignInPending)) {
+      setTimeout(() => {
+        if (event === "SIGNED_IN" && state.ready && state.user?.id === session?.user?.id) return;
+        syncSession(session);
+      }, 0);
+    }
   });
   state.result = async function(promise) {
     const { data, error } = await promise;
@@ -20965,9 +20979,14 @@ ${suffix}`;
   };
   state.auth = {
     signIn: async (email, password) => {
-      const result = await state.result(client.auth.signInWithPassword({ email, password }));
-      await syncSession(result.session);
-      return result;
+      staffSignInPending = true;
+      try {
+        const result = await state.result(client.auth.signInWithPassword({ email, password }));
+        await syncSession(result.session);
+        return result;
+      } finally {
+        staffSignInPending = false;
+      }
     },
     resendConfirmation: (email) => state.result(client.auth.resend({ type: "signup", email })),
     signOut: () => client.auth.signOut()
@@ -20984,8 +21003,13 @@ ${suffix}`;
     pending: async () => state.result(client.from("properties").select("*,property_private(*),property_photos(*)").eq("status", "pending").order("created_at", { ascending: true })),
     approve: async (id) => state.result(client.from("properties").update({ status: "published" }).eq("id", id).select().single()),
     archive: async (id) => state.result(client.from("properties").update({ status: "archived" }).eq("id", id).select().single()),
+    setStatus: (id, status) => state.result(client.from("properties").update({ status }).eq("id", id).select("id,status").single()),
     reject: async (id, reason) => state.result(client.from("properties").update({ status: "declined", description: reason }).eq("id", id).select().single()),
     publicBySlug: async (slug) => state.result(client.rpc("marketplace_public_details", { kind: null, slug })).then((rows) => rows?.[0] || null)
+  };
+  state.tiffin = {
+    plans: () => state.result(client.from("tiffin_plans").select("*").order("created_at", { ascending: false })),
+    save: (plan, id) => state.result((id ? client.from("tiffin_plans").update(plan).eq("id", id) : client.from("tiffin_plans").insert(plan)).select().single())
   };
   state.marketplace = {
     feed: (kind) => state.result(client.rpc("marketplace_public_details", { kind })),

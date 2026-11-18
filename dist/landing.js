@@ -8,7 +8,7 @@
   var moveFields = `<label>Posting city<input name="city" value="Pune" readonly></label><label>Move date<input name="date" type="date"></label>${select("Family size", "size", ["1", "2", "3", "4", "5+"])}${select("Monthly budget", "budget", ["Under \u20B920,000", "\u20B920,000\u2013\u20B930,000", "\u20B930,000\u2013\u20B945,000", "\u20B945,000+"])}${select("Property type", "property", ["1 BHK", "2 BHK", "3 BHK", "Independent home", "PG / room"])}`;
   var cardGrid = (items, cls = "") => `<div class="sd-grid ${cls}">${items.map(([title, copy]) => `<article class="sd-card"><h3>${title}</h3><p>${copy}</p></article>`).join("")}</div>`;
   var formEnd = (label) => `<label class="sd-trap" aria-hidden="true">Website<input name="website" tabindex="-1" autocomplete="off"></label><label class="sd-consent"><input type="checkbox" name="consent" required> I agree to be contacted about this request.</label><button class="sd-btn">${label}</button><p class="sd-status" role="status"></p>`;
-  var navLinks = '<a href="#pune-checklist">Posting checklist</a><a href="#homes">Rooms & flats</a><a href="#move-services">Tiffin & move-in</a><a href="#items">Household items</a>';
+  var navLinks = '<a href="#pune-checklist">Posting checklist</a><a href="#homes">Rooms & flats</a><a href="#tiffin">Tiffin menus</a><a href="#items">Household items</a>';
   var escapeText = (value) => String(value).replace(/[&<>]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[char]);
   var homePage = (coordinator = "") => `<div class="sd">
 <a class="sd-skip" href="#main-content">Skip to content</a>
@@ -23,7 +23,7 @@
       <p>Find a room or flat, arrange your first week of tiffin, and get local help with move-in. One Pune coordinator for defence families, police personnel, doctors and government employees.</p>
       <div class="sd-actions">
         <a class="sd-btn" href="#match" data-event="hero_cta">Plan my Pune move <span aria-hidden="true">\u2197</span></a>
-        <a class="sd-btn sd-outline" href="#match" data-need="Tiffin & meals" data-event="hero_tiffin">Check tiffin delivery</a>
+        <a class="sd-btn sd-outline" href="#tiffin" data-event="hero_tiffin">Check tiffin delivery</a>
       </div>
       <p class="sd-note sd-coverage">Starting in Wanwadi and Wanowrie. Ask about Fatima Nagar and Salunke Vihar.</p>
     </div>
@@ -67,7 +67,7 @@
     ["Moving & cleaning", "Ask about packing, moving and cleaning. We\u2019ll confirm availability and share costs before you commit."],
     ["Home setup", "Get help checking internet, utilities, furniture rentals and repairs around your move date."]
   ])}
-    <a class="sd-btn" href="#match" data-need="Tiffin & meals">Request mess or tiffin options</a>
+    <a class="sd-btn" href="#tiffin">See menus or request a custom plan</a>
   </div>
 </section>
 <section class="sd-band" id="match"><div class="sd-wrap sd-final"><div><h2>Tell us what you need in Pune.</h2><p>Request a room, flat, meal plan or move-in help. We\u2019ll follow up about availability.</p></div><form method="post" action="/api/early-access" class="sd-card" id="sd-lead" data-lead="relocation" aria-label="Request a relocation plan"><div class="sd-fields"><label>Full name<input name="name" required maxlength="100" autocomplete="name"></label><label>Email<input name="email" type="email" required maxlength="254" autocomplete="email"></label><label>Phone (optional)<input name="phone" type="tel" maxlength="25" autocomplete="tel"></label>${areaField}</div>

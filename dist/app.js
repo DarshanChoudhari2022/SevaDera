@@ -9,7 +9,7 @@ const money=v=>'₹'+Number(v||0).toLocaleString('en-IN');
 function toast(message){const el=document.querySelector('#toast');if(!el)return;el.textContent=message;el.style.display='block';setTimeout(()=>el.style.display='none',3500)}
 function header() {
   return `<header><a class="brand" href="#home"><span class="mark">⌂</span><span>Sainik Space<small>HOMES FOR THOSE WHO SERVE</small></span></a>
-    <nav aria-label="Main navigation"><a href="#homes">Homes</a><a href="#items">Household items</a><a href="#support">Contact support</a>${cloud?.staff ? '<a href="#owner">Post a listing</a>' : ''}<a href="#admin">${cloud?.staff ? 'Admin dashboard' : 'Staff sign in'}</a></nav>
+    <nav aria-label="Main navigation"><a href="#homes">Homes</a><a href="#items">Household items</a><a href="#tiffin">Tiffin menus</a><a href="#support">Contact support</a>${cloud?.staff ? '<a href="#owner">Post a listing</a>' : ''}<a href="#admin">${cloud?.staff ? 'Admin dashboard' : 'Staff sign in'}</a></nav>
     <button class="mobile-menu" aria-label="Open navigation" onclick="document.querySelector('nav').classList.toggle('open')">☰</button></header>`;
 }
 function footer(){return `<footer><a class="brand" href="#home"><span class="mark">⌂</span>Sainik Space</a><p>Rooted in Wanwadi. Built around your next chapter.<br>Independent housing portal · Free during launch</p><a href="#admin">Staff sign in ↗</a></footer>`}
@@ -29,15 +29,41 @@ function authPage() {
     </form></main>${footer()}`;
 }
 function ownerPage(){if(!cloud?.staff)return staffGate();return `${header()}<main class="section staff-editor"><div class="eyebrow">Staff listing editor</div><h2>List a home or household item</h2><p>Post on behalf of the owner or seller after getting their consent. Keep phone numbers, exact addresses and identifying details out of the photos.</p><div class="dashboard"><div><div id="my-listings" class="panel"><p>Loading your listings…</p></div></div><form class="form panel" id="listing-form"><input type="hidden" name="id"><label>Listing type<select name="listing_kind"><option value="home">Home for rent</option><option value="item">Second-hand household item</option></select></label><label>Internal title<input name="title" required minlength="3" maxlength="100" placeholder="For example, a 2 BHK flat"></label><label>Neighbourhood<select name="area"><option>Wanwadi</option><option>Wanowrie</option><option>Fatima Nagar</option><option>Salunke Vihar</option></select></label><div class="form-grid"><label><span id="market-price-label">Monthly rent (₹)</span><input name="rent" type="number" min="1" max="1000000" required></label><label data-home-field>Bedrooms<select name="bedrooms"><option>1</option><option>2</option><option>3</option><option>4</option></select></label><label data-home-field>Size (sq ft)<input name="size_sqft" type="number" min="1"></label><label data-home-field>Furnishing<select name="furnishing"><option>Unfurnished</option><option>Semi-furnished</option><option>Furnished</option></select></label></div><label><span id="market-address-label">Exact address</span><input name="exact_address" required minlength="5" maxlength="500"></label><label>Private contact phone<input name="contact_phone" type="tel" required minlength="7" maxlength="25"></label><fieldset class="listing-public-fields"><legend>Visible on the public link</legend><p class="muted">The neighbourhood, price and photos will also be public. Leave out names, phone numbers and exact addresses.</p><label>Public title (optional)<input name="public_title" minlength="3" maxlength="100" placeholder="For example, 2 BHK flat in Wanwadi"></label><label>Public description (optional)<textarea name="public_description" maxlength="1200" rows="3"></textarea></label></fieldset><label>Private listing notes<textarea name="description" maxlength="3000"></textarea></label><label>Listing photos<input name="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple></label><div class="actions"><button class="button" type="submit" value="publish">Publish listing</button><button class="button outline" type="submit" value="draft">Save draft</button></div><p id="listing-status" role="status"></p><p id="listing-cache-status" class="muted">Unfinished changes stay on this browser until you save, publish or sign out.</p><p class="muted">Photos are re-encoded to remove location metadata before upload.</p></form></div></main>${footer()}`}
-async function editListing(id){try{const row=(await cloud.listings.mine()).find(x=>x.id===id);if(!row)return;const form=document.querySelector('#listing-form');for(const [name,value] of Object.entries({id:row.id,listing_kind:row.listing_kind,title:row.title,public_title:row.public_title||'',public_description:row.public_description||'',area:row.area,rent:row.rent,bedrooms:row.bedrooms,size_sqft:row.size_sqft||'',furnishing:row.furnishing,description:row.description||'',exact_address:(Array.isArray(row.property_private)?row.property_private[0]:row.property_private)?.exact_address||'',contact_phone:(Array.isArray(row.property_private)?row.property_private[0]:row.property_private)?.contact_phone||''})){if(form.elements[name])form.elements[name].value=value}syncListingFields();cacheListingDraft(form);form.scrollIntoView({block:'start'});toast('Listing loaded for editing.')}catch(e){toast(e.message)}}
-async function loadListings(){const el=document.querySelector('#my-listings');if(!el)return;try{const [rows,stats]=await Promise.all([cloud.listings.mine(),cloud.marketplace.stats()]);if(!el.isConnected)return;el.innerHTML=`<h3>Your posts</h3>${rows.map(x=>`<div class="listing-row"><span><strong>${escapeHtml(x.title)}</strong><br><small>${escapeHtml(x.area)} · ${money(x.rent)} · ${escapeHtml(x.status)}<br>${visitSummary(stats.find(stat=>stat.id===x.id))}</small></span><div class="actions">${x.status!=='pending'?`<button class="button outline" onclick="editListing('${x.id}')">Edit</button>`:''}${x.status==='draft'||x.status==='declined'?`<button class="button" data-moderate="approve" data-listing-id="${x.id}">Publish</button>`:x.status==='published'?`<a class="button outline" href="#share/${encodeURIComponent(x.id)}">View live</a><button class="button outline" data-copy-listing="${escapeHtml(x.id)}">Copy public link</button>`:''}</div></div>`).join('')||'<p class="muted">Your first listing starts here.</p>'}` }catch(e){el.innerHTML=`<div class="notice">${escapeHtml(e.message)}</div>`}}
+async function editListing(id){try{const row=(await cloud.listings.mine()).find(x=>x.id===id);if(!row||row.status==='deleted')return;const form=document.querySelector('#listing-form');if(!form)return;setDraftFiles(form,[]);for(const [name,value] of Object.entries({id:row.id,listing_kind:row.listing_kind,title:row.title,public_title:row.public_title||'',public_description:row.public_description||'',area:row.area,rent:row.rent,bedrooms:row.bedrooms,size_sqft:row.size_sqft||'',furnishing:row.furnishing,description:row.description||'',exact_address:(Array.isArray(row.property_private)?row.property_private[0]:row.property_private)?.exact_address||'',contact_phone:(Array.isArray(row.property_private)?row.property_private[0]:row.property_private)?.contact_phone||''})){if(form.elements[name])form.elements[name].value=value}syncListingFields();cacheListingDraft(form);form.scrollIntoView({block:'start'});toast('Listing loaded for editing.')}catch(e){toast(e.message)}}
+async function loadListings() {
+  const panel = document.querySelector('#my-listings');
+  if (!panel) return;
+  try {
+    const rows = await cloud.listings.mine();
+    if (!panel.isConnected) return;
+    panel.innerHTML = '<h3>Your posts</h3>' + (rows.map(row => `<article class="listing-row"><div>
+      <strong>${escapeHtml(row.title)}</strong><p>${escapeHtml(row.area)} · ${money(row.rent)} · ${listingStatusLabel(row.status)}</p>
+      </div>${listingControls(row)}</article>`).join('') || '<p>No posts saved yet. Complete the form and choose Save draft or Publish listing.</p>');
+    const stats = await cloud.marketplace.stats().catch(() => []);
+    if (!panel.isConnected) return;
+    for (const row of stats) {
+      const text = document.createElement('small');
+      text.textContent = visitSummary(row);
+      panel.querySelector('[data-listing-row="' + row.id + '"]')?.before(text);
+    }
+  } catch (error) {
+    if (panel.isConnected) panel.innerHTML = `<p class="notice">Posts couldn’t load: ${escapeHtml(error.message)}</p>`;
+  }
+}
 async function moderate(id,action){try{if(action==='approve')await cloud.listings.approve(id);else{const reason=prompt('Reason for rejection?')||'Please update the listing.';await cloud.listings.reject(id,reason)}toast('Review updated.');render()}catch(e){toast(e.message)}}
 async function shareHome(slug,live=false){const url=new URL(location.href);url.hash=live?`share/${slug}`:`property/${slug}`;const wa=`https://wa.me/?text=${encodeURIComponent(`Sainik Space home: ${url.href}`)}`;showModal(`<div class="eyebrow">Share this home</div><h2>Ready for WhatsApp.</h2><p>The public link shows photos and public facts only. Private seller details stay protected.</p><input class="share-input" aria-label="Share link" readonly value="${escapeHtml(url.href)}"><div class="actions"><a class="button" href="${wa}" target="_blank" rel="noopener">Share on WhatsApp ↗</a><button class="button outline" id="copy-share">Copy link</button></div>`);document.querySelector('#copy-share').onclick=async()=>{await navigator.clipboard?.writeText(url.href);toast('Share link copied')}}
 function showModal(content){document.querySelector('#modal-body').innerHTML=content;modal.showModal()}
-function requestService(service){showModal(`<h2>${escapeHtml(service)}</h2><p>Tell us what you need and the Sainik Space team will follow up.</p><form class="form" id="request"><label>Name<input name="name" required></label><label>Email<input name="email" type="email" required></label><label>Preferred date<input name="date" type="date" required></label><label>Notes<textarea name="notes"></textarea></label><button class="button">Send request</button></form>`);document.querySelector('#request').onsubmit=e=>{e.preventDefault();modal.close();toast('Request saved. We will follow up shortly.')}}
+function requestService(service) {
+  if (service === 'Mess & tiffin') { location.hash = 'tiffin'; return; }
+  showModal(`<h2>${escapeHtml(service)}</h2><p>Tell us what you need and the team will follow up.</p>${guestEnquiry('',{ service })}`);
+}
 function propertyPage(id){const h=samples.find(x=>x.id===id);return `${header()}<section class="section"><div class="eyebrow">Sample home · ${h?.area||'Pune'}</div><h2>${escapeHtml(h?.title||'Home unavailable')}</h2>${h?`<img class="modal-photo" src="${photo(h.image,2000)}" alt="${escapeHtml(h.title)}"><p>${money(h.rent)} / month · ${h.beds} bedrooms · ${h.furnish}</p><button class="button" onclick="shareHome('${h.id}')">Share photos ↗</button>`:''}</section>${footer()}`}
 function render(){const route=location.hash.slice(1).split('?')[0]||'home';if(modal.open)modal.close();if (route.startsWith('share/')) {
   renderMarketPage(route, () => sharedPage(route.slice(6)));
+  return;
+}
+if (route === 'tiffin' || route === 'tiffin-admin') {
+  renderMarketPage(route, route === 'tiffin' ? publicTiffinPage : staffTiffinPage);
   return;
 }
 if (route === 'homes' || route === 'items') {
@@ -187,7 +213,7 @@ async function adminPage() {
         <button class="button outline" data-moderate="reject" data-listing-id="${escapeHtml(row.id)}">Decline</button>
       </div></article>`;
   }));
-  return `${header()}<main class="section market-page"><h1>Marketplace admin</h1><div class="actions"><a class="button" href="#owner">Post a property or item</a><button class="button outline" data-staff-signout>Sign out</button></div>
+  return `${header()}<main class="section market-page"><h1>Marketplace admin</h1><div class="actions"><a class="button" href="#owner">Post a property or item</a><a class="button outline" href="#tiffin-admin">Manage tiffin menus</a><button class="button outline" data-staff-signout>Sign out</button></div>
     <section class="panel"><h2>Review queue</h2>
       <p>Check that photos do not expose phone numbers, exact addresses or personal documents before publishing.</p>
       ${pendingCards.join('') || '<p>No listings awaiting review.</p>'}
@@ -196,7 +222,7 @@ async function adminPage() {
       <p>One visit per browser per listing per day. Seller and staff sessions are excluded when signed in.</p>
       ${stats.map(row => `<div class="listing-row"><div><strong>${escapeHtml(row.title)}</strong><br>
         <small>${listingLabel(row.listing_kind)} · ${escapeHtml(row.status)} · ${visitSummary(row)}</small></div>
-        ${row.status==='published' ? `<div class="actions"><button class="button outline" data-copy-listing="${escapeHtml(row.public_slug)}">Copy public link</button><button class="button outline" data-moderate="archive" data-listing-id="${escapeHtml(row.id)}">Unpublish</button></div>` : ''}</div>`).join('') || '<p>No listings yet.</p>'}
+        ${listingControls(row,false)}</div>`).join('') || '<p>No listings yet.</p>'}
     </section>
     <section class="panel">${staffInbox(requests)}</section>
     </main>${footer()}`;
@@ -206,10 +232,36 @@ document.addEventListener('change', event => {
   if (event.target.name === 'listing_kind') syncListingFields();
 });
 document.addEventListener('click', async event => {
-  const button = event.target.closest('button[data-close-support],button[data-staff-signout],button[data-moderate],button[data-copy-listing]');
+  const button = event.target.closest('button[data-close-support],button[data-staff-signout],button[data-moderate],button[data-copy-listing],button[data-listing-status],button[data-edit-plan],button[data-enquire-plan]');
   if (!button) return;
   button.disabled = true;
   try {
+    if (button.hasAttribute('data-enquire-plan')) {
+      showModal(`<h2>Request this tiffin plan</h2>${guestEnquiry('',{tiffin:true,planId:button.dataset.enquirePlan})}`);
+      return;
+    }
+    if (button.dataset.editPlan) {
+      await editTiffinPlan(button.dataset.editPlan);
+      return;
+    }
+    if (button.dataset.listingStatus) {
+      const next = button.dataset.listingStatus;
+      const id = button.dataset.listingId;
+      if (next === 'deleted' && !window.confirm('Remove this listing from the public site? You can restore it as a draft.')) return;
+      if (next === 'published') await cloud.listings.approve(id);
+      else await cloud.listings.setStatus(id,next);
+      if (document.querySelector('#listing-form')) {
+        const form = document.querySelector('#listing-form');
+        if (next === 'deleted' && form.elements.id.value === id) {
+          form.reset();
+          syncListingFields();
+          await clearListingDraft(cloud.user?.id);
+        }
+        await loadListings();
+      } else render();
+      toast(next === 'published' ? 'Listing published. View it or copy its public link.' : 'Listing updated.');
+      return;
+    }
     if (button.dataset.copyListing) {
       const url = publicListingUrl(button.dataset.copyListing);
       try { await navigator.clipboard.writeText(url); toast('Public link copied.'); }
@@ -318,6 +370,85 @@ document.addEventListener('change', event => {
   if (event.target.form?.id === 'listing-form') cacheListingDraft(event.target.form);
 });
 
+
+function listingStatusLabel(status) {
+  return ({draft:'Draft',pending:'Pending',published:'Published',declined:'Declined',
+    archived:'Unpublished',rented:'Rented',sold:'Sold',deleted:'Deleted'})[status] || 'Unknown';
+}
+
+function listingControls(row, showEdit = true) {
+  const id = escapeHtml(row.id);
+  const action = (status,label) => `<button class="button outline" data-listing-status="${status}" data-listing-id="${id}">${label}</button>`;
+  if (row.status === 'deleted') return `<div class="actions" data-listing-row="${id}">${action('draft','Restore draft')}</div>`;
+  return `<div class="actions" data-listing-row="${id}">
+    ${showEdit ? `<button class="button outline" onclick="editListing('${id}')">Edit</button>` : ''}
+    ${row.status === 'published' ? `
+      <a class="button outline" href="#share/${encodeURIComponent(row.id)}">View live</a>
+      <button class="button outline" data-copy-listing="${id}">Copy public link</button>
+      ${action(row.listing_kind === 'item' ? 'sold' : 'rented',row.listing_kind === 'item' ? 'Mark sold' : 'Mark rented')}
+      ${action('archived','Unpublish')}` : action('published','Publish')}
+    ${action('deleted','Delete')}
+  </div>`;
+}
+
+function tiffinRequestFields(planId) {
+  return `${planId ? `<input type="hidden" name="planId" value="${escapeHtml(planId)}">` : ''}
+    <label>Delivery neighbourhood<input name="area" maxlength="60" required placeholder="For example, Wanwadi"></label>
+    <div class="form-grid">
+      <label>Meals<select name="mealType"><option>Lunch</option><option>Dinner</option><option>Lunch and dinner</option></select></label>
+      <label>Servings per delivery<input name="mealCount" type="number" min="1" max="99" value="1" required></label>
+      <label>Plan length<select name="schedule"><option>Trial</option><option>Weekly</option><option>Monthly</option></select></label>
+      <label>Preferred start date (optional)<input name="date" type="date"></label>
+    </div>`;
+}
+
+async function publicTiffinPage() {
+  const plans = await cloud.tiffin.plans();
+  const cards = plans.filter(plan => plan.published).map(plan => `<article class="panel">
+    <h2>${escapeHtml(plan.title)}</h2>
+    <p><strong>${money(plan.price_rupees)} / ${escapeHtml(plan.billing_period)}</strong></p>
+    <p class="listing-description">${escapeHtml(plan.menu)}</p>
+    <p class="muted">Delivery: ${escapeHtml(plan.delivery_areas)}</p>
+    <button class="button outline" data-enquire-plan="${escapeHtml(plan.id)}">Request this plan</button>
+    </article>`);
+  return `${header()}<main class="section market-page">
+    <h1>Pune tiffin menus and meal plans</h1>
+    <p>See the current menu or tell us how often you’d like meals. We’ll confirm delivery and pricing before you order.</p>
+    ${cards.length ? `<div class="cards tiffin-cards">${cards.join('')}</div>` : '<p class="notice">No menus are published yet. You can still ask for a custom plan.</p>'}
+    <section class="market-contact"><h2>Request a custom tiffin plan</h2><p>Add dietary preferences or delivery instructions in the notes.</p>${guestEnquiry('',{tiffin:true})}</section>
+    </main>${footer()}`;
+}
+
+async function staffTiffinPage() {
+  if (!cloud?.staff) return staffGate();
+  const plans = await cloud.tiffin.plans();
+  const cards = plans.map(plan => `<article class="listing-row"><div><strong>${escapeHtml(plan.title)}</strong>
+    <p>${money(plan.price_rupees)} / ${escapeHtml(plan.billing_period)} · ${plan.published ? 'Published' : 'Draft'}</p></div>
+    <button class="button outline" data-edit-plan="${escapeHtml(plan.id)}">Edit</button></article>`);
+  return `${header()}<main class="section market-page staff-editor"><h1>Manage tiffin menus</h1>
+    <div class="dashboard"><div class="panel"><h2>Plans</h2>${cards.join('') || '<p>No tiffin plans saved yet.</p>'}<a href="#tiffin">View public menus</a></div>
+    <form class="form panel" id="tiffin-plan-form">
+      <h2>Menu and pricing</h2>
+      <input type="hidden" name="id">
+      <label>Plan name<input name="title" minlength="3" maxlength="100" required></label>
+      <label>Menu<textarea name="menu" minlength="3" maxlength="1500" rows="6" required placeholder="List the dishes or the menu by day"></textarea></label>
+      <label>Delivery areas<input name="delivery_areas" minlength="3" maxlength="250" required placeholder="Wanwadi, Wanowrie…"></label>
+      <div class="form-grid"><label>Price (₹)<input type="number" name="price_rupees" min="1" max="100000" required></label>
+      <label>Price per<select name="billing_period"><option value="meal">Meal</option><option value="week">Week</option><option value="month">Month</option></select></label></div>
+      <div class="actions"><button class="button" type="submit" value="publish">Publish plan</button>
+      <button class="button outline" type="submit" value="draft">Save as unpublished draft</button></div>
+      <p role="status"></p>
+    </form></div></main>${footer()}`;
+}
+
+async function editTiffinPlan(id) {
+  const form = document.querySelector('#tiffin-plan-form');
+  const plan = (await cloud.tiffin.plans()).find(row => row.id === id);
+  if (!plan || !form?.isConnected) return;
+  for (const field of ['id','title','menu','delivery_areas','price_rupees','billing_period']) form.elements[field].value = plan[field];
+  form.elements.title.focus();
+}
+
 function staffGate() {
   if (!cloud?.ready) return header() + '<main class="section"><p role="status">Checking staff access…</p></main>' + footer();
   if (!cloud.user) return authPage();
@@ -325,9 +456,9 @@ function staffGate() {
   return header() + '<main class="section"><h2>Staff access required</h2><p>This email is not authorised to publish listings.</p><button class="button outline" data-staff-signout>Sign out</button></main>' + footer();
 }
 
-function guestEnquiry(listingId = '') {
+function guestEnquiry(listingId = '', options = {}) {
   return `<form class="form guest-enquiry" data-guest-enquiry method="post" action="/api/early-access">
-    ${listingId ? `<input type="hidden" name="listingId" value="${escapeHtml(listingId)}">` : `<label>What can we help with?<select name="service" required><option value="">Choose one</option><option>List a property</option><option>Sell a household item</option><option>Find a room or flat</option><option>Tiffin or move-in support</option></select></label>`}
+    ${listingId ? `<input type="hidden" name="listingId" value="${escapeHtml(listingId)}">` : options.tiffin ? tiffinRequestFields(options.planId) : options.service ? `<input type="hidden" name="service" value="${escapeHtml(options.service)}">` : `<label>What can we help with?<select name="service" required><option value="">Choose one</option><option>List a property</option><option>Sell a household item</option><option>Find a room or flat</option><option>Tiffin or move-in support</option></select></label>`}
     <label>Name<input name="name" autocomplete="name" maxlength="100" required></label>
     <label>Email<input type="email" name="email" autocomplete="email" maxlength="254" required></label>
     <label>Phone (optional)<input type="tel" name="phone" autocomplete="tel" maxlength="25"></label>
@@ -347,9 +478,9 @@ function supportPage() {
 function staffInbox(requests) {
   return `<h2>Support inbox</h2>${requests.length ? requests.map(row => {
     const details = row.details || {};
-    const summary = [details.area, details.date, ...(Array.isArray(details.needs) ? details.needs : [])].filter(Boolean).join(' · ');
+    const summary = [details.area, details.date, details.mealType, details.mealCount ? details.mealCount + ' servings' : '', details.schedule, ...(Array.isArray(details.needs) ? details.needs : [])].filter(Boolean).join(' · ');
     return `<article class="listing-row"><div>
-      <h3>${escapeHtml(row.listing_title || details.service || (row.kind === 'relocation' ? 'Pune move request' : 'Support enquiry'))}</h3>
+      <h3>${escapeHtml(row.listing_title || details.service || (row.kind === 'relocation' ? 'Pune move request' : row.kind === 'tiffin' ? 'Custom tiffin request' : 'Support enquiry'))}</h3>
       <p>${escapeHtml(details.name)} · ${escapeHtml(details.email)}${details.phone ? ' · ' + escapeHtml(details.phone) : ''}</p>
       ${summary ? `<p>${escapeHtml(summary)}</p>` : ''}
       ${details.message ? `<p>${escapeHtml(details.message)}</p>` : ''}
@@ -360,13 +491,26 @@ function staffInbox(requests) {
 
 document.addEventListener('submit', async event => {
   const form = event.target;
-  if (!['auth-form','listing-form'].includes(form.id) && !form.hasAttribute('data-guest-enquiry')) return;
+  if (!['auth-form','listing-form','tiffin-plan-form'].includes(form.id) && !form.hasAttribute('data-guest-enquiry')) return;
   event.preventDefault();
   const data = new FormData(form);
   const buttons = [...form.querySelectorAll('button[type=submit],button:not([type])')];
   buttons.forEach(button => button.disabled = true);
   const status = form.querySelector('[role=status]');
+  let savedToDatabase = false;
   try {
+    if (form.id === 'tiffin-plan-form') {
+      if (!cloud.staff) throw new Error('Staff access required.');
+      status.textContent = 'Saving tiffin plan…';
+      await cloud.tiffin.save({
+        title:data.get('title').trim(),menu:data.get('menu').trim(),delivery_areas:data.get('delivery_areas').trim(),
+        price_rupees:Number(data.get('price_rupees')),billing_period:data.get('billing_period'),
+        published:event.submitter?.value === 'publish'
+      }, data.get('id') || undefined);
+      render();
+      toast(event.submitter?.value === 'publish' ? 'Tiffin plan published.' : 'Tiffin draft saved.');
+      return;
+    }
     if (form.id === 'auth-form') {
       status.textContent = 'Signing in…';
       await cloud.auth.signIn(data.get('email'),data.get('password'));
@@ -382,6 +526,7 @@ document.addEventListener('submit', async event => {
       if (!cloud.staff) throw new Error('Staff access required.');
       const publish = event.submitter?.value === 'publish';
       const files = data.getAll('photos').filter(file => file?.size);
+      if (!data.get('title').trim()) throw new Error('Enter a listing title.');
       if (publish && !data.get('id') && !files.length) throw new Error('Add at least one photo before publishing.');
       status.textContent = 'Saving listing…';
       const id = await cloud.listings.save({
@@ -391,6 +536,7 @@ document.addEventListener('submit', async event => {
         size_sqft:Number(data.get('size_sqft') || 0),
         public_title:data.get('public_title'), public_description:data.get('public_description')
       }, {exact_address:data.get('exact_address'), contact_phone:data.get('contact_phone')}, data.get('id') || undefined);
+      savedToDatabase = true;
       form.elements.id.value = id;
       await cacheListingDraft(form);
       for (let index = 0; index < files.length; index++) {
@@ -413,21 +559,29 @@ document.addEventListener('submit', async event => {
     status.textContent = 'Sending enquiry…';
     const response = await fetch('/api/early-access', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({...Object.fromEntries(data), kind:data.has('listingId') ? 'listing' : 'owner', needs:[]})
+      body:JSON.stringify({...Object.fromEntries(data), kind:data.has('listingId') ? 'listing' : data.has('mealType') ? 'tiffin' : 'owner', needs:[]})
     });
-    if (response.status === 404) throw new Error('This listing is no longer available.');
+    if (response.status === 404) throw new Error('This listing or plan is no longer available.');
     if (response.status === 429) throw new Error('Too many enquiries. Please try again later.');
     if (!response.ok) throw new Error('We couldn’t send your enquiry. Please try again.');
     form.reset();
     status.textContent = 'Enquiry received. The Sainik Space team will follow up.';
   } catch (error) {
     const target = form.isConnected ? status : document.querySelector('#staff-auth-status');
-    if (target) target.textContent = error.message;
+    if (target) target.textContent = savedToDatabase ? 'Saved as a draft. Couldn’t finish publishing or uploading: ' + error.message : error.message;
+    if (savedToDatabase) loadListings();
     else toast(error.message);
   } finally {
     buttons.forEach(button => button.disabled = false);
   }
 });
+
+document.addEventListener('invalid', event => {
+  const input = event.target;
+  if (input.form?.id !== 'listing-form') return;
+  const label = input.labels?.[0]?.textContent?.trim().split('\n')[0];
+  input.form.querySelector('#listing-status').textContent = 'Listing not saved. Check ' + (label || 'the highlighted field') + '.';
+}, true);
 
 document.addEventListener('click', async event => {
   const button = event.target.closest('[data-resend-staff-email]');
