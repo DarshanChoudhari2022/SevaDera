@@ -1,19 +1,23 @@
+import { createHash } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
+import { homePage } from '../src/early-access.mjs';
 const supabaseUrl = process.env.SUPABASE_URL || 'https://xqturhxjnwjzakfkypxi.supabase.co';
 const supabasePublishableKey = process.env.SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_MgT_dGTakqNODIhD30mvwA_AkHz3oti';
-await writeFile('dist/config.js', `globalThis.__SEVADERA_CONFIG__=${JSON.stringify({supabaseUrl,supabasePublishableKey})};\n`, 'utf8');
-const index = await readFile('dist/index.html', 'utf8');
-const title = 'SevaDera | Pune homes and relocation for service families';
-const description = 'Plan your next posting in Pune. Join SevaDera early access for rental homes, movers, cleaning, internet and tiffin support.';
+const coordinatorName = (process.env.SEVADERA_COORDINATOR_NAME || '').trim().slice(0, 80);
+await writeFile('dist/config.js', `globalThis.__SEVADERA_CONFIG__=${JSON.stringify({supabaseUrl,supabasePublishableKey,coordinatorName})};\n`, 'utf8');
+const index = (await readFile('dist/index.html', 'utf8')).replace(/\?v=[a-f0-9]{12}(?=")/g, '');
+const title = 'Pune Rooms, Flats, Mess & Tiffin for Army Families | Sainik Space';
+const description = 'Looking for a room, PG, flat, mess or tiffin in Pune? Request housing, meals and move-in support around Wanwadi and nearby areas through Sainik Space.';
 const siteUrl = 'https://aangansetu.vercel.app/';
 const structured = JSON.stringify({
   '@context': 'https://schema.org',
   '@graph': [
-    {'@type':'Organization','@id':siteUrl+'#organisation',name:'SevaDera',url:siteUrl,slogan:'Home, wherever duty takes you.'},
-    {'@type':'Service',name:'Relocation support for service families',provider:{'@id':siteUrl+'#organisation'},areaServed:{'@type':'City',name:'Pune'}}
+    {'@type':'Organization','@id':siteUrl+'#organisation',name:'Sainik Space',url:siteUrl,slogan:'Home, wherever duty takes you.'},
+    {'@type':'Service',name:'Pune housing, mess, tiffin and relocation enquiries',provider:{'@id':siteUrl+'#organisation'},areaServed:{'@type':'City',name:'Pune'}}
   ]
 });
 const normalized = index
+  .replace(/<div id="app">[\s\S]*?<\/div>(?=<dialog id="modal")/, () => `<div id="app">${homePage(coordinatorName)}</div>`)
   .replace(/<!-- seva-seo -->.*?<!-- \/seva-seo -->/gs, '')
   .replace(/<title>.*?<\/title>/, `<title>${title}</title>`)
   .replace(/<meta name="description" content="[^"]*">/, `<meta name="description" content="${description}">`)
@@ -23,6 +27,11 @@ const normalized = index
   .replace('<script src="live.js"></script>', '<script src="landing.js"></script>')
   .replace(/<link rel="stylesheet" href="army\.css">/g, '')
   .replace(/<script src="config\.js"><\/script>/g, '');
-await writeFile('dist/index.html', normalized
+const page = normalized
   .replace('<link rel="stylesheet" href="style.css">', '<link rel="stylesheet" href="style.css"><link rel="stylesheet" href="army.css">')
-  .replace('<script src="cloud.js">', '<script src="config.js"></script><script src="cloud.js">'), 'utf8');
+   .replace('<script src="cloud.js">', '<script src="config.js"></script><script src="cloud.js">');
+const assets = ['style.css', 'army.css', 'early-access.css', 'config.js', 'cloud.js', 'app.js', 'landing.js'];
+const hashes = await Promise.all(assets.map(async asset => createHash('sha256')
+  .update(await readFile('dist/' + asset)).digest('hex').slice(0, 12)));
+await writeFile('dist/index.html', assets.reduce((html, asset, i) =>
+  html.replaceAll('"' + asset + '"', '"' + asset + '?v=' + hashes[i] + '"'), page), 'utf8');

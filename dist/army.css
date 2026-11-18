@@ -7,3 +7,26 @@
 .share-gallery-head .brand{font-size:20px}
 .signup-only{display:none}
 @media(max-width:760px){.hero-content:before{inset:-22px -18px -18px -18px}.share-gallery-head{gap:15px;align-items:flex-start;flex-direction:column}}
+
+.market-page { display: grid; gap: 1.25rem; background: white; color: #1d1e19; }
+.market-page h1 { font-size: clamp(2.25rem, 5vw, 3.75rem); letter-spacing: -.045em; }
+.market-page h2 { font-size: clamp(1.5rem, 3vw, 2.5rem); }
+.market-page p { margin: 0; color: #4d5346; }
+.market-page .button { justify-self: start; }
+.market-card { overflow: hidden; border: 1px solid #d6ddd2; border-radius: 12px; }
+.market-card a { display: block; }
+.market-card h3 { margin: 1rem; }
+.market-photo { display: block; width: 100%; height: auto; border-radius: 8px; }
+.market-card .market-photo { aspect-ratio: 4 / 3; object-fit: cover; border-radius: 0; }
+.market-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 310px), 1fr)); gap: 1rem; }
+.market-gallery img { max-height: 540px; object-fit: contain; background: #f5f5ef; }
+.market-contact { padding: clamp(1rem, 4vw, 2rem); background: #eff8d4; border-radius: 12px; overflow-wrap: anywhere; }
+.market-moderation-photos { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .75rem; }
+.market-moderation-photos img { width: min(100%, 360px); }
+#owner-contact-queue { margin-top: 1rem; }
+.market-page .listing-row .actions { flex-shrink: 0; }
+@media (max-width: 680px) {
+  .market-page { gap: .9rem; }
+  .market-page .panel { padding: 1rem; }
+  .market-page .listing-row .actions { flex-shrink: 1; }
+}

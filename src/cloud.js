@@ -55,7 +55,11 @@ state.photoUpload = async function(propertyId, file, position) {
 };
 
 state.auth = {
-  signIn: async (email, password) => state.result(client.auth.signInWithPassword({email, password})),
+  signIn: async (email, password) => {
+    const result = await state.result(client.auth.signInWithPassword({email, password}));
+    await syncSession(result.session);
+    return result;
+  },
   signUp: async (email, password, displayName, sellerCategory) => {
     const result = await state.result(client.auth.signUp({email, password, options:{data:{display_name:displayName, seller_category:sellerCategory}}}));
     if (result.user) await state.result(client.rpc('ensure_profile',{display_name:displayName,seller_category:sellerCategory}));
@@ -74,7 +78,17 @@ state.listings = {
   submit: async (id) => state.result(client.from('properties').update({status:'pending'}).eq('id',id).eq('owner_id',state.user.id).select().single()),
   pending: async () => state.result(client.from('properties').select('*,property_private(*),property_photos(*)').eq('status','pending').order('created_at',{ascending:true})),
   approve: async (id) => state.result(client.from('properties').update({status:'published'}).eq('id',id).select().single()),
+  archive: async (id) => state.result(client.from('properties').update({status:'archived'}).eq('id',id).select().single()),
   reject: async (id, reason) => state.result(client.from('properties').update({status:'declined',description:reason}).eq('id',id).select().single()),
-  publicBySlug: async (slug) => state.result(client.rpc('public_property_by_slug',{slug})).then(rows=>rows?.[0] || null)
+  publicBySlug: async (slug) => state.result(client.rpc('marketplace_listings',{kind:null,slug})).then(rows=>rows?.[0] || null)
 };
-state.publicPhotoUrl = path => `${config.supabaseUrl || 'https://xqturhxjnwjzakfkypxi.supabase.co'}/storage/v1/object/public/property-photos/${path}`;
+state.marketplace = {
+  feed: kind => state.result(client.rpc('marketplace_listings', { kind })),
+  stats: () => state.result(client.rpc('marketplace_stats')),
+  visit: (slug, visitor) => state.result(client.rpc('record_marketplace_visit', { slug, visitor })),
+  request: listing => state.result(client.rpc('request_marketplace_contact', { listing })),
+  myRequest: id => state.result(client.from('enquiries').select('status').eq('property_id',id).eq('requester_id',state.user.id).maybeSingle()),
+  privateContact: id => state.result(client.from('property_private').select('exact_address,contact_phone').eq('property_id',id).maybeSingle()),
+  requests: () => state.result(client.from('enquiries').select('id,property_id,status,created_at').eq('status','pending').order('created_at')),
+  decide: (id,status) => state.result(client.from('enquiries').update({status}).eq('id',id).eq('status','pending').select('id').single())
+};
