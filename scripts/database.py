@@ -24,7 +24,8 @@ try:
             if payload.get('admin_email'):
                 cur.execute('insert into private.admin_invitations(email) values(lower(%s)) on conflict do nothing', (payload['admin_email'],))
                 cur.execute('insert into private.staff_members(user_id) select id from auth.users where lower(email)=lower(%s) and email_confirmed_at is not null on conflict do nothing', (payload['admin_email'],))
-                print(json.dumps({'admin_invitation': 'configured for verified site owner email'}))
+                cur.execute('select exists(select 1 from private.staff_members s join auth.users u on u.id=s.user_id where lower(u.email)=lower(%s))', (payload['admin_email'],))
+                print(json.dumps({'admin_invitation': 'configured', 'verified_staff_account_active': cur.fetchone()[0]}))
 except Exception as error:
     print(json.dumps({'error_type': type(error).__name__, 'message': str(error).replace(payload['password'], '[redacted]')}))
     sys.exit(1)

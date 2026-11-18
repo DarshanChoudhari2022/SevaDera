@@ -60,11 +60,7 @@ state.auth = {
     await syncSession(result.session);
     return result;
   },
-  signUp: async (email, password, displayName, sellerCategory) => {
-    const result = await state.result(client.auth.signUp({email, password, options:{data:{display_name:displayName, seller_category:sellerCategory}}}));
-    if (result.user) await state.result(client.rpc('ensure_profile',{display_name:displayName,seller_category:sellerCategory}));
-    return result;
-  },
+  resendConfirmation: email => state.result(client.auth.resend({type:'signup',email})),
   signOut: () => client.auth.signOut()
 };
 state.profile = async function() {
@@ -86,9 +82,8 @@ state.marketplace = {
   feed: kind => state.result(client.rpc('marketplace_listings', { kind })),
   stats: () => state.result(client.rpc('marketplace_stats')),
   visit: (slug, visitor) => state.result(client.rpc('record_marketplace_visit', { slug, visitor })),
-  request: listing => state.result(client.rpc('request_marketplace_contact', { listing })),
-  myRequest: id => state.result(client.from('enquiries').select('status').eq('property_id',id).eq('requester_id',state.user.id).maybeSingle()),
-  privateContact: id => state.result(client.from('property_private').select('exact_address,contact_phone').eq('property_id',id).maybeSingle()),
+  supportInbox: () => state.result(client.rpc('staff_support_inbox')),
+  closeSupport: request_id => state.result(client.rpc('staff_close_support_request', { request_id })),
   requests: () => state.result(client.from('enquiries').select('id,property_id,status,created_at').eq('status','pending').order('created_at')),
   decide: (id,status) => state.result(client.from('enquiries').update({status}).eq('id',id).eq('status','pending').select('id').single())
 };

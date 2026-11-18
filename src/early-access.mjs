@@ -77,7 +77,7 @@ export const homePage = (coordinator = '') => `<div class="sd">
 <section class="sd-wrap sd-local" aria-labelledby="sd-resale">
   <div><p class="sd-note">Community marketplace</p><h2 id="sd-resale">Buy and sell second-hand household items.</h2></div>
   <div><p>Find cupboards, beds, desks and other essentials listed by Army families, veterans and community members. Ask to contact the seller directly to agree on the price and pickup.</p>
-  <div class="sd-actions"><a class="sd-btn" href="#items">Browse household items</a><a class="sd-btn sd-outline" href="#owner">List an item</a></div></div>
+  <div class="sd-actions"><a class="sd-btn" href="#items">Browse household items</a><a class="sd-btn sd-outline" href="#support">Ask us to list an item</a></div></div>
 </section>
 </main>
 <footer class="sd-footer">
@@ -94,8 +94,8 @@ export const homePage = (coordinator = '') => `<div class="sd">
       </nav>
       <nav aria-label="Owners and partners">
         <h2>Get involved</h2>
-        <a href="#owner">List a property</a>
-        <a href="#account">Sign in</a>
+        <a href="#support">Contact support to list</a>
+        <a href="#admin">Staff sign in</a>
       </nav>
     </div>
     <div class="sd-footer-bottom">

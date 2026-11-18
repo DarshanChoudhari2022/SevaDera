@@ -21,7 +21,7 @@ const normalized = index
   .replace(/<!-- seva-seo -->.*?<!-- \/seva-seo -->/gs, '')
   .replace(/<title>.*?<\/title>/, `<title>${title}</title>`)
   .replace(/<meta name="description" content="[^"]*">/, `<meta name="description" content="${description}">`)
-  .replace('</head>', `<!-- seva-seo --><link rel="canonical" href="${siteUrl}"><meta property="og:type" content="website"><meta property="og:url" content="${siteUrl}"><meta property="og:title" content="${title}"><meta property="og:description" content="${description}"><meta property="og:image" content="${siteUrl}assets/realtora/f453685bd78a198c.png"><script type="application/ld+json">${structured}</script><!-- /seva-seo --></head>`)
+  .replace('</head>', `<!-- seva-seo --><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="canonical" href="${siteUrl}"><meta property="og:type" content="website"><meta property="og:url" content="${siteUrl}"><meta property="og:title" content="${title}"><meta property="og:description" content="${description}"><meta property="og:image" content="${siteUrl}assets/realtora/f453685bd78a198c.png"><script type="application/ld+json">${structured}</script><!-- /seva-seo --></head>`)
   .replace(/<link rel="stylesheet" href="(?:landing|editorial|replica|early-access)\.css">/g, '')
   .replace('</head>', '<link rel="stylesheet" href="early-access.css"></head>')
   .replace('<script src="live.js"></script>', '<script src="landing.js"></script>')
