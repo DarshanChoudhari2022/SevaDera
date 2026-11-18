@@ -255,7 +255,7 @@ document.addEventListener('click', async event => {
         if (next === 'deleted' && form.elements.id.value === id) {
           form.reset();
           syncListingFields();
-          await clearListingDraft(cloud.user?.id);
+          void clearListingDraft(cloud.user?.id);
         }
         await loadListings();
       } else render();
@@ -269,7 +269,7 @@ document.addEventListener('click', async event => {
       return;
     }
     if (button.hasAttribute('data-staff-signout')) {
-      await clearListingDraft(cloud.user?.id);
+      void clearListingDraft(cloud.user?.id);
       await cloud.auth.signOut();
       location.hash = 'account';
       return;
@@ -299,6 +299,7 @@ function openListingDraftDb() {
     request.onupgradeneeded = () => request.result.createObjectStore('listing-drafts');
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
+    request.onblocked = () => reject(new Error('Browser draft storage is blocked'));
   });
   return listingDraftDb;
 }
@@ -325,12 +326,12 @@ function setDraftFiles(form, photos) {
   input.files = selection.files;
 }
 
-async function cacheListingDraft(form) {
+async function cacheListingDraft(form, remainingPhotos) {
   const staff = cloud.staff && cloud.user?.id;
   if (!staff || !form) return;
   form.dataset.edited = 'true';
   const data = new FormData(form);
-  const photos = data.getAll('photos').filter(file => file?.size);
+  const photos = remainingPhotos ?? data.getAll('photos').filter(file => file?.size);
   data.delete('photos');
   const draft = { fields:Object.fromEntries(data), photos };
   try {
@@ -528,7 +529,7 @@ document.addEventListener('submit', async event => {
       const files = data.getAll('photos').filter(file => file?.size);
       if (!data.get('title').trim()) throw new Error('Enter a listing title.');
       if (publish && !data.get('id') && !files.length) throw new Error('Add at least one photo before publishing.');
-      status.textContent = 'Saving listing…';
+      status.textContent = 'Saving listing to the database…';
       const id = await cloud.listings.save({
         title:data.get('title'), listing_kind:data.get('listing_kind'), area:data.get('area'),
         bedrooms:Number(data.get('bedrooms') || 1), rent:Number(data.get('rent')),
@@ -538,14 +539,20 @@ document.addEventListener('submit', async event => {
       }, {exact_address:data.get('exact_address'), contact_phone:data.get('contact_phone')}, data.get('id') || undefined);
       savedToDatabase = true;
       form.elements.id.value = id;
-      await cacheListingDraft(form);
+      // Local storage is a backup. It must never block an upload or publication.
+      void cacheListingDraft(form, files);
       for (let index = 0; index < files.length; index++) {
+        status.textContent = `Draft saved. Uploading photo ${index + 1} of ${files.length}…`;
         await cloud.photoUpload(id, files[index], index);
-        setDraftFiles(form, files.slice(index + 1));
-        await cacheListingDraft(form);
+        const remaining = files.slice(index + 1);
+        try { setDraftFiles(form, remaining); } catch { /* Some browsers disallow assigning selected files. */ }
+        void cacheListingDraft(form, remaining);
       }
-      if (publish) await cloud.listings.approve(id);
-      await clearListingDraft(cloud.user?.id);
+      if (publish) {
+        status.textContent = 'Publishing listing…';
+        await cloud.listings.approve(id);
+      }
+      void clearListingDraft(cloud.user?.id);
       form.reset();
       syncListingFields();
       if (publish) {

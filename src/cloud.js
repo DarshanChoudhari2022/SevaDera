@@ -59,7 +59,8 @@ state.photoUpload = async function(propertyId, file, position) {
   const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.85));
   if (!blob) throw new Error('This photo could not be processed. Try another image.');
   const path = `${state.user.id}/${propertyId}/${crypto.randomUUID()}.jpg`;
-  await state.result(client.storage.from('property-photos').upload(path, blob, {contentType:'image/jpeg',upsert:false}));
+  // Upload the encoded JPEG bytes directly with an explicit content type.
+  await state.result(client.storage.from('property-photos').upload(path, await blob.arrayBuffer(), {contentType:'image/jpeg',upsert:false}));
   try {
     return await state.result(client.from('property_photos').insert({property_id:propertyId,storage_path:path,position}).select().single());
   } catch (error) {
