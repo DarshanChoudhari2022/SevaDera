@@ -20,7 +20,7 @@ function homePage(){return `<div class="hero">${header()}<div class="hero-conten
 function authPage() {
   return `${header()}<main class="section staff-access"><p class="eyebrow">Staff access</p><h2>Sainik Space admin sign-in</h2>
     <p>Use your authorised staff account. Customers can <a href="#support">contact support</a> without signing in.</p>
-    <form class="form panel staff-login" id="auth-form">
+    <form class="form panel staff-login" id="auth-form" method="post">
       <label>Email<input type="email" name="email" required autocomplete="username"></label>
       <label>Password<input type="password" name="password" required autocomplete="current-password"></label>
       <button class="button">Sign in</button>
@@ -28,7 +28,7 @@ function authPage() {
       <p role="status" id="staff-auth-status"></p>
     </form></main>${footer()}`;
 }
-function ownerPage(){if(!cloud?.staff)return staffGate();return `${header()}<main class="section staff-editor"><div class="eyebrow">Staff listing editor</div><h2>List a home or household item</h2><p>Post on behalf of the owner or seller after getting their consent. Keep phone numbers, exact addresses and identifying details out of the photos.</p><div class="dashboard"><div><div id="my-listings" class="panel"><p>Loading your listings…</p></div></div><form class="form panel" id="listing-form"><input type="hidden" name="id"><label>Listing type<select name="listing_kind"><option value="home">Home for rent</option><option value="item">Second-hand household item</option></select></label><label>Internal title<input name="title" required minlength="3" maxlength="100" placeholder="For example, a 2 BHK flat"></label><label>Neighbourhood<select name="area"><option>Wanwadi</option><option>Wanowrie</option><option>Fatima Nagar</option><option>Salunke Vihar</option></select></label><div class="form-grid"><label><span id="market-price-label">Monthly rent (₹)</span><input name="rent" type="number" min="1" max="1000000" required></label><label data-home-field>Bedrooms<select name="bedrooms"><option>1</option><option>2</option><option>3</option><option>4</option></select></label><label data-home-field>Size (sq ft)<input name="size_sqft" type="number" min="1" max="100000"></label><label data-home-field>Furnishing<select name="furnishing"><option>Unfurnished</option><option>Semi-furnished</option><option>Furnished</option></select></label></div><label><span id="market-address-label">Exact address</span><input name="exact_address" required minlength="5" maxlength="500"></label><label>Private contact phone<input name="contact_phone" type="tel" required minlength="7" maxlength="25"></label><fieldset class="listing-public-fields"><legend>Visible on the public link</legend><p class="muted">The neighbourhood, price and photos will also be public. Leave out names, phone numbers and exact addresses.</p><label>Public title (optional)<input name="public_title" minlength="3" maxlength="100" placeholder="For example, 2 BHK flat in Wanwadi"></label><label>Public description (optional)<textarea name="public_description" maxlength="1200" rows="3"></textarea></label></fieldset><label>Private listing notes<textarea name="description" maxlength="3000"></textarea></label><label>Listing photos<input name="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple aria-describedby="listing-photo-help"></label><p class="muted" id="listing-photo-help">Add at least one JPEG, PNG or WebP photo to publish. Each photo can be up to 8 MB. Save draft keeps the listing private.</p><div class="actions"><button class="button" type="submit" value="publish">Publish listing</button><button class="button outline" type="submit" value="draft">Save draft</button></div><p id="listing-status" role="status"></p><p id="listing-cache-status" class="muted">Unfinished changes stay on this browser until you save, publish or sign out.</p><p class="muted">Photos are re-encoded to remove location metadata before upload.</p></form></div></main>${footer()}`}
+function ownerPage(){if(!cloud?.staff)return staffGate();return `${header()}<main class="section staff-editor"><div class="eyebrow">Staff listing editor</div><h2>List a home or household item</h2><p>Post on behalf of the owner or seller after getting their consent. Keep phone numbers, exact addresses and identifying details out of the photos.</p><div class="dashboard"><div><div id="my-listings" class="panel"><p>Loading your listings…</p></div></div><form class="form panel" id="listing-form" method="post"><input type="hidden" name="id"><label>Listing type<select name="listing_kind"><option value="home">Home for rent</option><option value="item">Second-hand household item</option></select></label><label>Internal title<input name="title" required minlength="3" maxlength="100" placeholder="For example, a 2 BHK flat"></label><label>Neighbourhood<select name="area"><option>Wanwadi</option><option>Wanowrie</option><option>Fatima Nagar</option><option>Salunke Vihar</option></select></label><div class="form-grid"><label><span id="market-price-label">Monthly rent (₹)</span><input name="rent" type="number" min="1" max="1000000" required></label><label data-home-field>Bedrooms<select name="bedrooms"><option>1</option><option>2</option><option>3</option><option>4</option></select></label><label data-home-field>Size (sq ft)<input name="size_sqft" type="number" min="1" max="100000"></label><label data-home-field>Furnishing<select name="furnishing"><option>Unfurnished</option><option>Semi-furnished</option><option>Furnished</option></select></label></div><label><span id="market-address-label">Exact address</span><input name="exact_address" required minlength="5" maxlength="500"></label><label>Private contact phone<input name="contact_phone" type="tel" required minlength="7" maxlength="25"></label><fieldset class="listing-public-fields"><legend>Visible on the public link</legend><p class="muted">The neighbourhood, price and photos will also be public. Leave out names, phone numbers and exact addresses.</p><label>Public title (optional)<input name="public_title" minlength="3" maxlength="100" placeholder="For example, 2 BHK flat in Wanwadi"></label><label>Public description (optional)<textarea name="public_description" maxlength="1200" rows="3"></textarea></label></fieldset><label>Private listing notes<textarea name="description" maxlength="3000"></textarea></label><label>Listing photos<input name="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple aria-describedby="listing-photo-help"></label><p class="muted" id="listing-photo-help">Add at least one JPEG, PNG or WebP photo to publish. Each photo can be up to 8 MB. Save draft keeps the listing private.</p><div class="actions"><button class="button" type="submit" value="publish">Publish listing</button><button class="button outline" type="submit" value="draft">Save draft</button></div><p id="listing-status" role="status"></p><p id="listing-cache-status" class="muted">Unfinished changes stay on this browser until you save, publish or sign out.</p><p class="muted">Photos are re-encoded to remove location metadata before upload.</p></form></div></main>${footer()}`}
 async function editListing(id){try{const row=(await cloud.listings.mine()).find(x=>x.id===id);if(!row||row.status==='deleted')return;const form=document.querySelector('#listing-form');if(!form)return;setDraftFiles(form,[]);for(const [name,value] of Object.entries({id:row.id,listing_kind:row.listing_kind,title:row.title,public_title:row.public_title||'',public_description:row.public_description||'',area:row.area,rent:row.rent,bedrooms:row.bedrooms,size_sqft:row.size_sqft||'',furnishing:row.furnishing,description:row.description||'',exact_address:(Array.isArray(row.property_private)?row.property_private[0]:row.property_private)?.exact_address||'',contact_phone:(Array.isArray(row.property_private)?row.property_private[0]:row.property_private)?.contact_phone||''})){if(form.elements[name])form.elements[name].value=value}syncListingFields();cacheListingDraft(form);form.scrollIntoView({block:'start'});toast('Listing loaded for editing.')}catch(e){toast(e.message)}}
 async function loadListings() {
   const panel = document.querySelector('#my-listings');
@@ -386,10 +386,10 @@ async function restoreListingDraft(form) {
 }
 
 document.addEventListener('input', event => {
-  if (event.target.form?.id === 'listing-form') cacheListingDraft(event.target.form);
+  if (event.target.form?.matches('#listing-form')) cacheListingDraft(event.target.form);
 });
 document.addEventListener('change', event => {
-  if (event.target.form?.id === 'listing-form') cacheListingDraft(event.target.form);
+  if (event.target.form?.matches('#listing-form')) cacheListingDraft(event.target.form);
 });
 
 
@@ -449,7 +449,7 @@ async function staffTiffinPage() {
     <button class="button outline" data-edit-plan="${escapeHtml(plan.id)}">Edit</button></article>`);
   return `${header()}<main class="section market-page staff-editor"><h1>Manage tiffin menus</h1>
     <div class="dashboard"><div class="panel"><h2>Plans</h2>${cards.join('') || '<p>No tiffin plans saved yet.</p>'}<a href="#tiffin">View public menus</a></div>
-    <form class="form panel" id="tiffin-plan-form">
+    <form class="form panel" id="tiffin-plan-form" method="post">
       <h2>Menu and pricing</h2>
       <input type="hidden" name="id">
       <label>Plan name<input name="title" minlength="3" maxlength="100" required></label>
@@ -513,7 +513,9 @@ function staffInbox(requests) {
 
 document.addEventListener('submit', async event => {
   const form = event.target;
-  if (!['auth-form','listing-form','tiffin-plan-form'].includes(form.id) && !form.hasAttribute('data-guest-enquiry')) return;
+  // A named input can shadow form.id in browsers. Read the attribute directly.
+  const formId = form.getAttribute('id');
+  if (!['auth-form','listing-form','tiffin-plan-form'].includes(formId) && !form.hasAttribute('data-guest-enquiry')) return;
   event.preventDefault();
   const data = new FormData(form);
   const buttons = [...form.querySelectorAll('button[type=submit],button:not([type])')];
@@ -521,7 +523,7 @@ document.addEventListener('submit', async event => {
   const status = form.querySelector('[role=status]');
   let savedToDatabase = false;
   try {
-    if (form.id === 'tiffin-plan-form') {
+    if (formId === 'tiffin-plan-form') {
       if (!cloud.staff) throw new Error('Staff access required.');
       status.textContent = 'Saving tiffin plan…';
       await cloud.tiffin.save({
@@ -533,7 +535,7 @@ document.addEventListener('submit', async event => {
       toast(event.submitter?.value === 'publish' ? 'Tiffin plan published.' : 'Tiffin draft saved.');
       return;
     }
-    if (form.id === 'auth-form') {
+    if (formId === 'auth-form') {
       status.textContent = 'Signing in…';
       await cloud.auth.signIn(data.get('email'),data.get('password'));
       if (cloud.staff) {
@@ -544,7 +546,7 @@ document.addEventListener('submit', async event => {
       }
       return;
     }
-    if (form.id === 'listing-form') {
+    if (formId === 'listing-form') {
       if (!cloud.staff) throw new Error('Staff access required.');
       const publish = event.submitter?.value === 'publish';
       const files = data.getAll('photos').filter(file => file?.size);
@@ -607,7 +609,7 @@ document.addEventListener('submit', async event => {
 
 document.addEventListener('invalid', event => {
   const input = event.target;
-  if (input.form?.id !== 'listing-form') return;
+  if (!input.form?.matches('#listing-form')) return;
   const label = input.labels?.[0]?.textContent?.trim().split('\n')[0];
   input.form.querySelector('#listing-status').textContent = 'Listing not saved. Check ' + (label || 'the highlighted field') + '.';
 }, true);

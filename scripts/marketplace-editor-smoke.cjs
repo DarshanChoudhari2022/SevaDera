@@ -10,13 +10,17 @@ async function main() {
   const dom = new JSDOM(html, {url:(local ? 'http://127.0.0.1:4173/?preview=staff' : site + '/') + '#owner', runScripts:'outside-only'});
   const { window } = dom;
   const { document } = window;
+  // Chromium resolves named form controls before inherited element properties.
+  Object.defineProperty(window.HTMLFormElement.prototype, 'id', {
+    get() { return this.elements.namedItem('id') || this.getAttribute('id') || ''; }
+  });
   let selectedPhoto;
   const photo = fs.readFileSync(photoPath);
   const NativeFormData = window.FormData;
   window.FormData = class extends NativeFormData {
     constructor(form) {
       super(form);
-      if (form?.id === 'listing-form' && selectedPhoto) this.set('photos', selectedPhoto);
+      if (form?.matches('#listing-form') && selectedPhoto) this.set('photos', selectedPhoto);
     }
   };
   Object.assign(window, { fetch, Headers, Request, Response, TextEncoder, TextDecoder, AbortController, Blob,
@@ -46,6 +50,7 @@ async function main() {
       (document.querySelector('#listing-status,#staff-auth-status')?.textContent || 'none'));
   }
   const login = await waitFor(() => document.querySelector('#auth-form'), 'staff login page');
+  const loginMethod = login.method;
   login.elements.email.value = email;
   login.elements.password.value = password;
   login.querySelector('button[type=submit],button:not([type])').click();
@@ -63,6 +68,7 @@ async function main() {
   };
   for (const [kind, title] of [['home','Demo — editor rental'],['item','Demo — editor cupboard']]) {
     const form = await waitFor(() => document.querySelector('#listing-form'), 'listing editor');
+    assert.equal(form.id, form.elements.id, 'The test must expose Chromium form control shadowing');
     Object.assign(form.elements.listing_kind,{value:kind});
     form.elements.listing_kind.dispatchEvent(new window.Event('change',{bubbles:true}));
     for (const [name,value] of Object.entries({title,public_title:title,rent:'18000',
@@ -85,6 +91,7 @@ async function main() {
       form.querySelector('[value=publish]').click();
     }
     const link = await waitFor(() => document.querySelector('#listing-status a[href^="#share/"]'), kind + ' editor publish');
+    assert.equal(form.method, 'post', 'A native listing submission must keep private fields out of the URL');
     assert.match(link.getAttribute('href'), /^#share\/[0-9a-f-]{36}$/);
     const id = link.getAttribute('href').split('/')[1];
     if (draftId) assert.equal(id,draftId);
@@ -119,6 +126,7 @@ async function main() {
   }
   for (const {kind,id,title} of posted) assert.equal((await publicFeed(kind,id))[0]?.public_title,title);
   const home = posted.find(row => row.kind === 'home');
+  assert.equal(loginMethod, 'post', 'A native sign-in submission must keep credentials out of the URL');
   const guest = new JSDOM(html, {url:site + '/#homes', runScripts:'outside-only'});
   Object.assign(guest.window, {fetch, Headers, Request, Response, TextEncoder, TextDecoder,
     AbortController, matchMedia:() => ({matches:true}), scrollTo:() => {}});
