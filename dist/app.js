@@ -28,7 +28,7 @@ function authPage() {
       <p role="status" id="staff-auth-status"></p>
     </form></main>${footer()}`;
 }
-function ownerPage(){if(!cloud?.staff)return staffGate();return `${header()}<main class="section staff-editor"><div class="eyebrow">Staff listing editor</div><h2>List a home or household item</h2><p>Post on behalf of the owner or seller after getting their consent. Keep phone numbers, exact addresses and identifying details out of the photos.</p><div class="dashboard"><div><div id="my-listings" class="panel"><p>Loading your listings…</p></div></div><form class="form panel" id="listing-form"><input type="hidden" name="id"><label>Listing type<select name="listing_kind"><option value="home">Home for rent</option><option value="item">Second-hand household item</option></select></label><label>Internal title<input name="title" required minlength="3" maxlength="100" placeholder="For example, a 2 BHK flat"></label><label>Neighbourhood<select name="area"><option>Wanwadi</option><option>Wanowrie</option><option>Fatima Nagar</option><option>Salunke Vihar</option></select></label><div class="form-grid"><label><span id="market-price-label">Monthly rent (₹)</span><input name="rent" type="number" min="1" max="1000000" required></label><label data-home-field>Bedrooms<select name="bedrooms"><option>1</option><option>2</option><option>3</option><option>4</option></select></label><label data-home-field>Size (sq ft)<input name="size_sqft" type="number" min="1"></label><label data-home-field>Furnishing<select name="furnishing"><option>Unfurnished</option><option>Semi-furnished</option><option>Furnished</option></select></label></div><label><span id="market-address-label">Exact address</span><input name="exact_address" required minlength="5" maxlength="500"></label><label>Private contact phone<input name="contact_phone" type="tel" required minlength="7" maxlength="25"></label><fieldset class="listing-public-fields"><legend>Visible on the public link</legend><p class="muted">The neighbourhood, price and photos will also be public. Leave out names, phone numbers and exact addresses.</p><label>Public title (optional)<input name="public_title" minlength="3" maxlength="100" placeholder="For example, 2 BHK flat in Wanwadi"></label><label>Public description (optional)<textarea name="public_description" maxlength="1200" rows="3"></textarea></label></fieldset><label>Private listing notes<textarea name="description" maxlength="3000"></textarea></label><label>Listing photos<input name="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple></label><div class="actions"><button class="button" type="submit" value="publish">Publish listing</button><button class="button outline" type="submit" value="draft">Save draft</button></div><p id="listing-status" role="status"></p><p id="listing-cache-status" class="muted">Unfinished changes stay on this browser until you save, publish or sign out.</p><p class="muted">Photos are re-encoded to remove location metadata before upload.</p></form></div></main>${footer()}`}
+function ownerPage(){if(!cloud?.staff)return staffGate();return `${header()}<main class="section staff-editor"><div class="eyebrow">Staff listing editor</div><h2>List a home or household item</h2><p>Post on behalf of the owner or seller after getting their consent. Keep phone numbers, exact addresses and identifying details out of the photos.</p><div class="dashboard"><div><div id="my-listings" class="panel"><p>Loading your listings…</p></div></div><form class="form panel" id="listing-form"><input type="hidden" name="id"><label>Listing type<select name="listing_kind"><option value="home">Home for rent</option><option value="item">Second-hand household item</option></select></label><label>Internal title<input name="title" required minlength="3" maxlength="100" placeholder="For example, a 2 BHK flat"></label><label>Neighbourhood<select name="area"><option>Wanwadi</option><option>Wanowrie</option><option>Fatima Nagar</option><option>Salunke Vihar</option></select></label><div class="form-grid"><label><span id="market-price-label">Monthly rent (₹)</span><input name="rent" type="number" min="1" max="1000000" required></label><label data-home-field>Bedrooms<select name="bedrooms"><option>1</option><option>2</option><option>3</option><option>4</option></select></label><label data-home-field>Size (sq ft)<input name="size_sqft" type="number" min="1" max="100000"></label><label data-home-field>Furnishing<select name="furnishing"><option>Unfurnished</option><option>Semi-furnished</option><option>Furnished</option></select></label></div><label><span id="market-address-label">Exact address</span><input name="exact_address" required minlength="5" maxlength="500"></label><label>Private contact phone<input name="contact_phone" type="tel" required minlength="7" maxlength="25"></label><fieldset class="listing-public-fields"><legend>Visible on the public link</legend><p class="muted">The neighbourhood, price and photos will also be public. Leave out names, phone numbers and exact addresses.</p><label>Public title (optional)<input name="public_title" minlength="3" maxlength="100" placeholder="For example, 2 BHK flat in Wanwadi"></label><label>Public description (optional)<textarea name="public_description" maxlength="1200" rows="3"></textarea></label></fieldset><label>Private listing notes<textarea name="description" maxlength="3000"></textarea></label><label>Listing photos<input name="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple aria-describedby="listing-photo-help"></label><p class="muted" id="listing-photo-help">Add at least one JPEG, PNG or WebP photo to publish. Each photo can be up to 8 MB. Save draft keeps the listing private.</p><div class="actions"><button class="button" type="submit" value="publish">Publish listing</button><button class="button outline" type="submit" value="draft">Save draft</button></div><p id="listing-status" role="status"></p><p id="listing-cache-status" class="muted">Unfinished changes stay on this browser until you save, publish or sign out.</p><p class="muted">Photos are re-encoded to remove location metadata before upload.</p></form></div></main>${footer()}`}
 async function editListing(id){try{const row=(await cloud.listings.mine()).find(x=>x.id===id);if(!row||row.status==='deleted')return;const form=document.querySelector('#listing-form');if(!form)return;setDraftFiles(form,[]);for(const [name,value] of Object.entries({id:row.id,listing_kind:row.listing_kind,title:row.title,public_title:row.public_title||'',public_description:row.public_description||'',area:row.area,rent:row.rent,bedrooms:row.bedrooms,size_sqft:row.size_sqft||'',furnishing:row.furnishing,description:row.description||'',exact_address:(Array.isArray(row.property_private)?row.property_private[0]:row.property_private)?.exact_address||'',contact_phone:(Array.isArray(row.property_private)?row.property_private[0]:row.property_private)?.contact_phone||''})){if(form.elements[name])form.elements[name].value=value}syncListingFields();cacheListingDraft(form);form.scrollIntoView({block:'start'});toast('Listing loaded for editing.')}catch(e){toast(e.message)}}
 async function loadListings() {
   const panel = document.querySelector('#my-listings');
@@ -94,7 +94,11 @@ function renderMarketPage(route, load) {
   });
 }
 
-const publicListingUrl = slug => new URL('#share/' + encodeURIComponent(slug), location.href).href;
+const publicListingUrl = slug => {
+  const isLocal = ['127.0.0.1', 'localhost', '[::1]'].includes(location.hostname);
+  const origin = isLocal ? 'https://aangansetu.vercel.app' : location.origin;
+  return new URL('/#share/' + encodeURIComponent(slug), origin).href;
+};
 const listingLabel = kind => kind === 'item' ? 'Household item' : 'Rental home';
 
 async function listingPhoto(path, alt) {
@@ -517,7 +521,7 @@ document.addEventListener('submit', async event => {
       status.textContent = 'Signing in…';
       await cloud.auth.signIn(data.get('email'),data.get('password'));
       if (cloud.staff) {
-        if (location.hash === '#admin') render();
+        if (['#admin', '#owner', '#tiffin-admin'].includes(location.hash)) render();
         else location.hash = 'admin';
       } else {
         render();
@@ -529,7 +533,6 @@ document.addEventListener('submit', async event => {
       const publish = event.submitter?.value === 'publish';
       const files = data.getAll('photos').filter(file => file?.size);
       if (!data.get('title').trim()) throw new Error('Enter a listing title.');
-      if (publish && !data.get('id') && !files.length) throw new Error('Add at least one photo before publishing.');
       status.textContent = 'Saving listing to the database…';
       const id = await cloud.listings.save({
         title:data.get('title'), listing_kind:data.get('listing_kind'), area:data.get('area'),
@@ -558,9 +561,10 @@ document.addEventListener('submit', async event => {
       form.elements.id.value = '';
       syncListingFields();
       if (publish) {
-        status.innerHTML = `Published. <a href="#share/${encodeURIComponent(id)}">View live listing</a>.`;
+        const feed = data.get('listing_kind') === 'item' ? 'items' : 'homes';
+        status.innerHTML = `Published. <a href="#share/${encodeURIComponent(id)}">View live listing</a> · <a href="#${feed}">Browse published listings</a> · <button type="button" class="text-button" data-copy-listing="${escapeHtml(id)}">Copy public link</button>`;
       } else {
-        status.textContent = 'Draft saved. Choose Publish in Your posts to make it public.';
+        status.textContent = 'Private draft saved. Open it under Your posts to add photos or publish.';
       }
       loadListings();
       return;
@@ -577,7 +581,7 @@ document.addEventListener('submit', async event => {
     status.textContent = 'Enquiry received. The Sainik Space team will follow up.';
   } catch (error) {
     const target = form.isConnected ? status : document.querySelector('#staff-auth-status');
-    if (target) target.textContent = savedToDatabase ? 'Saved as a draft. Couldn’t finish publishing or uploading: ' + error.message : error.message;
+    if (target) target.textContent = savedToDatabase ? 'Saved as a private draft. ' + (error.message === 'Add a photo before publication' ? 'Add a photo, then select Publish listing again.' : error.message + ' You can retry here or reopen it from Your posts.') : error.message;
     if (savedToDatabase) loadListings();
     else toast(error.message);
   } finally {
