@@ -38,6 +38,7 @@ async function loadListings() {
     if (!panel.isConnected) return;
     panel.innerHTML = '<h3>Your posts</h3>' + (rows.map(row => `<article class="listing-row"><div>
       <strong>${escapeHtml(row.title)}</strong><p>${escapeHtml(row.area)} · ${money(row.rent)} · ${listingStatusLabel(row.status)}</p>
+      <small>${row.property_photos?.length || 0} uploaded photos</small>
       </div>${listingControls(row)}</article>`).join('') || '<p>No posts saved yet. Complete the form and choose Save draft or Publish listing.</p>');
     const stats = await cloud.marketplace.stats().catch(() => []);
     if (!panel.isConnected) return;
@@ -251,11 +252,26 @@ document.addEventListener('click', async event => {
     if (button.dataset.listingStatus) {
       const next = button.dataset.listingStatus;
       const id = button.dataset.listingId;
+      const form = document.querySelector('#listing-form');
+      if (next === 'published' && form?.elements.id.value === id) {
+        const publish = form.querySelector('button[value="publish"]');
+        if (!publish.disabled) {
+          form.requestSubmit(publish);
+          if (publish.disabled) form.querySelector('#listing-status').scrollIntoView({block:'nearest'});
+        }
+        return;
+      }
       if (next === 'deleted' && !window.confirm('Remove this listing from the public site? You can restore it as a draft.')) return;
-      if (next === 'published') await cloud.listings.approve(id);
-      else await cloud.listings.setStatus(id,next);
-      if (document.querySelector('#listing-form')) {
-        const form = document.querySelector('#listing-form');
+      if (next === 'published') {
+        try {
+          await cloud.listings.approve(id);
+        } catch (error) {
+          if (error.message !== 'Add a photo before publication') throw error;
+          toast('Open the listing in the staff editor, select a photo, then choose Publish listing.');
+          return;
+        }
+      } else await cloud.listings.setStatus(id,next);
+      if (form?.isConnected) {
         if (next === 'deleted' && form.elements.id.value === id) {
           form.reset();
           form.elements.id.value = '';

@@ -26,6 +26,7 @@ async function main() {
   Object.defineProperty(window.navigator, 'clipboard', {value:{writeText:async url => { copiedLink = url; }}});
   window.HTMLCanvasElement.prototype.getContext = () => ({drawImage() {}});
   window.HTMLCanvasElement.prototype.toBlob = callback => callback(new Blob([photo], {type:'image/jpeg'}));
+  window.HTMLElement.prototype.scrollIntoView = () => {};
   // Simulate the browser refusing to complete a local draft write. Publishing must
   // still reach the server. Browsers can delay storage while a tab is suspended.
   window.indexedDB = {open: () => ({})};
@@ -76,7 +77,13 @@ async function main() {
       assert.deepEqual(await publicFeed(kind,draftId), []);
     }
     selectedPhoto = new window.File([photo],'demo.jpg',{type:'image/jpeg'});
-    form.querySelector('[value=publish]').click();
+    if (draftId) {
+      const rowPublish = await waitFor(() => document.querySelector(
+        `[data-listing-row="${draftId}"] [data-listing-status="published"]`), 'draft row Publish button');
+      rowPublish.click();
+    } else {
+      form.querySelector('[value=publish]').click();
+    }
     const link = await waitFor(() => document.querySelector('#listing-status a[href^="#share/"]'), kind + ' editor publish');
     assert.match(link.getAttribute('href'), /^#share\/[0-9a-f-]{36}$/);
     const id = link.getAttribute('href').split('/')[1];
