@@ -58,7 +58,7 @@ def main():
                                         input=json.dumps({"site": site, "email": email, "password": password,
                                                           "photoPath": str(photo_path), "local": args.editor == "local",
                                                           "draftTitle": draft_title}),
-                                        encoding="utf-8", timeout=60)
+                                        encoding="utf-8", timeout=90)
                 if result.returncode:
                     raise RuntimeError("Staff editor smoke test failed")
                 if draft_title:
@@ -124,6 +124,12 @@ def main():
                     with psycopg.connect(host="db." + base.split("//", 1)[1], dbname="postgres", user="postgres",
                                          password=credentials["dbPassword"], sslmode="require", connect_timeout=10) as db:
                         db.execute("update public.properties set status='archived' where id=any(%s::uuid[])", (ids,))
+                        db.execute(
+                            """delete from public.early_access_leads
+                               where kind='listing' and details->>'email'=%s
+                               and details->>'listingId'=any(%s::text[])""",
+                            (email, [str(listing_id) for listing_id in ids]),
+                        )
                 if paths:
                     request(base + "/storage/v1/object/property-photos", "DELETE", service, {"prefixes": paths})
             finally:

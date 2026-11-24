@@ -36,7 +36,7 @@ async function loadListings() {
   try {
     const rows = await cloud.listings.mine();
     if (!panel.isConnected) return;
-    panel.innerHTML = '<h3>Your posts</h3>' + (rows.map(row => `<article class="listing-row"><div>
+    panel.innerHTML = '<div class="actions"><h3>Your posts</h3><button type="button" class="button outline" data-new-listing>Add listing</button></div>' + (rows.map(row => `<article class="listing-row"><div>
       <strong>${escapeHtml(row.title)}</strong><p>${escapeHtml(row.area)} · ${money(row.rent)} · ${listingStatusLabel(row.status)}</p>
       <small>${row.property_photos?.length || 0} uploaded photos</small>
       </div>${listingControls(row)}</article>`).join('') || '<p>No posts saved yet. Complete the form and choose Save draft or Publish listing.</p>');
@@ -59,7 +59,12 @@ function requestService(service) {
   showModal(`<h2>${escapeHtml(service)}</h2><p>Tell us what you need and the team will follow up.</p>${guestEnquiry('',{ service })}`);
 }
 function propertyPage(id){const h=samples.find(x=>x.id===id);return `${header()}<section class="section"><div class="eyebrow">Sample home · ${h?.area||'Pune'}</div><h2>${escapeHtml(h?.title||'Home unavailable')}</h2>${h?`<img class="modal-photo" src="${photo(h.image,2000)}" alt="${escapeHtml(h.title)}"><p>${money(h.rent)} / month · ${h.beds} bedrooms · ${h.furnish}</p><button class="button" onclick="shareHome('${h.id}')">Share photos ↗</button>`:''}</section>${footer()}`}
-function render(){const route=location.hash.slice(1).split('?')[0]||'home';if(modal.open)modal.close();if (route.startsWith('share/')) {
+function currentRoute() {
+  const listing = app.dataset.publicListing;
+  return location.hash.slice(1).split('?')[0] || (listing ? 'share/' + listing : 'home');
+}
+
+function render(){const route=currentRoute();if(modal.open)modal.close();if (route.startsWith('share/')) {
   renderMarketPage(route, () => sharedPage(route.slice(6)));
   return;
 }
@@ -88,7 +93,7 @@ function syncListingFields() {
 let marketRenderVersion = 0;
 function renderMarketPage(route, load) {
   const version = ++marketRenderVersion;
-  const current = () => version === marketRenderVersion && location.hash.slice(1).split('?')[0] === route;
+  const current = () => version === marketRenderVersion && currentRoute() === route;
   app.innerHTML = header() + '<main class="section"><p role="status">Loading…</p></main>';
   load().then(html => { if (current()) app.innerHTML = html; }).catch(() => {
     if (current()) app.innerHTML = header() + '<main class="section"><h2>Couldn’t load this page</h2><p>Please try again shortly.</p></main>' + footer();
@@ -98,8 +103,12 @@ function renderMarketPage(route, load) {
 const publicListingUrl = slug => {
   const isLocal = ['127.0.0.1', 'localhost', '[::1]'].includes(location.hostname);
   const origin = isLocal ? 'https://aangansetu.vercel.app' : location.origin;
-  return new URL('/#share/' + encodeURIComponent(slug), origin).href;
+  return new URL('/listing/' + encodeURIComponent(slug), origin).href;
 };
+const listingViewLink = id => ['127.0.0.1','localhost','[::1]'].includes(location.hostname)
+  ? '#share/' + encodeURIComponent(id)
+  : publicListingUrl(id);
+const whatsappListingLink = id => 'https://wa.me/?text=' + encodeURIComponent(publicListingUrl(id));
 const listingLabel = kind => kind === 'item' ? 'Household item' : 'Rental home';
 
 async function listingPhoto(path, alt) {
@@ -129,7 +138,7 @@ async function marketplaceCards(rows) {
   const cards = await Promise.all(rows.map(async row => {
     const title = marketplaceTitle(row);
     return `<article class="market-card">
-      <a href="#share/${encodeURIComponent(row.public_slug)}">${await listingPhoto(row.photos?.[0], title)}
+      <a href="${escapeHtml(listingViewLink(row.public_slug))}">${await listingPhoto(row.photos?.[0], title)}
         <div class="market-card-body">
           <h3>${escapeHtml(title)}</h3>
           <p>${escapeHtml(row.area)}, Pune</p>
@@ -184,25 +193,26 @@ async function sharedPage(slug) {
   const title = marketplaceTitle(listing);
   const photos = await Promise.all((listing.photos || []).map((path,index) => listingPhoto(path, label + ', photo ' + (index+1))));
   return `${header()}<main class="section market-page">
-    <p class="eyebrow">${label} · Public preview</p>
+    <p class="eyebrow">${label}</p>
     <h1>${escapeHtml(title)}</h1>
     <p>${escapeHtml(listing.area)}, Pune · ${marketplaceFacts(listing)}</p>
     ${listing.public_description ? `<p class="listing-description">${escapeHtml(listing.public_description)}</p>` : ''}
     <div class="market-gallery">${photos.join('') || '<p>Photos are unavailable for this listing.</p>'}</div>
-    <section class="market-contact" aria-label="Seller contact">
-      <h2>Ask Sainik Space about this listing</h2>
-      <p>Leave your details and our team will check availability and coordinate the next step.</p>
+    <section class="market-contact" aria-label="Request a quote">
+      <h2>Request a quote</h2>
+      <p>Ask about price, availability or a viewing. Sainik Space will follow up using the details you provide.</p>
       ${guestEnquiry(listing.id)}
       <div class="actions">
         <button class="button outline" data-copy-listing="${escapeHtml(listing.public_slug)}">Copy link</button>
-        <a class="button outline" href="https://wa.me/?text=${encodeURIComponent(publicListingUrl(listing.public_slug))}" target="_blank" rel="noopener">Share on WhatsApp</a>
+        <a class="button outline" href="${escapeHtml(whatsappListingLink(listing.public_slug))}" target="_blank" rel="noopener">Share on WhatsApp</a>
+        ${navigator.share ? `<button class="button outline" data-share-listing="${escapeHtml(listing.public_slug)}">More sharing options</button>` : ''}
       </div>
     </section>
     </main>${footer()}`;
 }
 
 function visitSummary(stats) {
-  return stats ? `${stats.visits_today} today · ${stats.visits_30d} in 30 days · ${stats.contact_requests} requests` : '';
+  return stats ? `Views: ${stats.visits_today} today · ${stats.visits_30d} in 30 days · ${stats.contact_requests} quote requests` : '';
 }
 
 async function adminPage() {
@@ -237,10 +247,23 @@ document.addEventListener('change', event => {
   if (event.target.name === 'listing_kind') syncListingFields();
 });
 document.addEventListener('click', async event => {
-  const button = event.target.closest('button[data-close-support],button[data-staff-signout],button[data-moderate],button[data-copy-listing],button[data-listing-status],button[data-edit-plan],button[data-enquire-plan]');
+  const button = event.target.closest('button[data-close-support],button[data-staff-signout],button[data-moderate],button[data-copy-listing],button[data-listing-status],button[data-edit-plan],button[data-enquire-plan],button[data-new-listing],button[data-share-listing]');
   if (!button) return;
   button.disabled = true;
   try {
+    if (button.hasAttribute('data-new-listing')) {
+      const form = document.querySelector('#listing-form');
+      if (!form || form.querySelector('button[value="publish"]').disabled) return;
+      if (form.dataset.edited && !window.confirm('Start a new listing and discard unsaved changes in the editor?')) return;
+      resetListingForm(form);
+      form.elements.title.focus();
+      return;
+    }
+    if (button.dataset.shareListing) {
+      try { await navigator.share({url:publicListingUrl(button.dataset.shareListing)}); }
+      catch (error) { if (error.name !== 'AbortError') throw error; }
+      return;
+    }
     if (button.hasAttribute('data-enquire-plan')) {
       showModal(`<h2>Request this tiffin plan</h2>${guestEnquiry('',{tiffin:true,planId:button.dataset.enquirePlan})}`);
       return;
@@ -273,10 +296,7 @@ document.addEventListener('click', async event => {
       } else await cloud.listings.setStatus(id,next);
       if (form?.isConnected) {
         if (next === 'deleted' && form.elements.id.value === id) {
-          form.reset();
-          form.elements.id.value = '';
-          syncListingFields();
-          void clearListingDraft(cloud.user?.id);
+          resetListingForm(form);
         }
         await loadListings();
       } else render();
@@ -378,6 +398,7 @@ async function restoreListingDraft(form) {
       if (form.elements[name]?.type !== 'file' && form.elements[name]) form.elements[name].value = value;
     }
     syncListingFields();
+    form.dataset.edited = 'true';
     setDraftFiles(form, draft.photos || []);
     form.querySelector('#listing-cache-status').textContent = 'Restored unfinished draft from this browser.';
   } catch {
@@ -398,6 +419,16 @@ function listingStatusLabel(status) {
     archived:'Unpublished',rented:'Rented',sold:'Sold',deleted:'Deleted'})[status] || 'Unknown';
 }
 
+function resetListingForm(form) {
+  form.reset();
+  form.elements.id.value = '';
+  delete form.dataset.edited;
+  form.querySelector('#listing-status').textContent = '';
+  form.querySelector('#listing-cache-status').textContent = 'Unfinished changes stay on this browser until you save, publish or sign out.';
+  syncListingFields();
+  void clearListingDraft(cloud.user?.id);
+}
+
 function listingControls(row, showEdit = true) {
   const id = escapeHtml(row.id);
   const action = (status,label) => `<button class="button outline" data-listing-status="${status}" data-listing-id="${id}">${label}</button>`;
@@ -405,8 +436,9 @@ function listingControls(row, showEdit = true) {
   return `<div class="actions" data-listing-row="${id}">
     ${showEdit ? `<button class="button outline" onclick="editListing('${id}')">Edit</button>` : ''}
     ${row.status === 'published' ? `
-      <a class="button outline" href="#share/${encodeURIComponent(row.id)}">View live</a>
+      <a class="button outline" href="${escapeHtml(listingViewLink(row.id))}">View live</a>
       <button class="button outline" data-copy-listing="${id}">Copy public link</button>
+      <a class="button outline" href="${escapeHtml(whatsappListingLink(row.id))}" target="_blank" rel="noopener">WhatsApp</a>
       ${action(row.listing_kind === 'item' ? 'sold' : 'rented',row.listing_kind === 'item' ? 'Mark sold' : 'Mark rented')}
       ${action('archived','Unpublish')}` : action('published','Publish')}
     ${action('deleted','Delete')}
@@ -487,7 +519,7 @@ function guestEnquiry(listingId = '', options = {}) {
     <label>What would you like to ask? (optional)<textarea name="message" maxlength="500" rows="3"></textarea></label>
     <label class="visually-hidden" aria-hidden="true">Website<input name="website" tabindex="-1" autocomplete="off"></label>
     <label class="guest-consent"><input type="checkbox" name="consent" required> I agree that Sainik Space can contact me about this enquiry.</label>
-    <button class="button">Send enquiry</button><p role="status"></p>
+    <button class="button">${listingId ? 'Request a quote' : 'Send enquiry'}</button><p role="status"></p>
     </form>`;
 }
 
@@ -563,9 +595,10 @@ document.addEventListener('submit', async event => {
       form.elements.id.value = id;
       // Local storage is a backup. It must never block an upload or publication.
       void cacheListingDraft(form, files);
+      const firstPhotoPosition = files.length && data.get('id') ? await cloud.nextPhotoPosition(id) : 0;
       for (let index = 0; index < files.length; index++) {
         status.textContent = `Draft saved. Uploading photo ${index + 1} of ${files.length}…`;
-        await cloud.photoUpload(id, files[index], index);
+        await cloud.photoUpload(id, files[index], firstPhotoPosition + index);
         const remaining = files.slice(index + 1);
         try { setDraftFiles(form, remaining); } catch { /* Some browsers disallow assigning selected files. */ }
         void cacheListingDraft(form, remaining);
@@ -574,13 +607,10 @@ document.addEventListener('submit', async event => {
         status.textContent = 'Publishing listing…';
         await cloud.listings.approve(id);
       }
-      void clearListingDraft(cloud.user?.id);
-      form.reset();
-      form.elements.id.value = '';
-      syncListingFields();
+      resetListingForm(form);
       if (publish) {
         const feed = data.get('listing_kind') === 'item' ? 'items' : 'homes';
-        status.innerHTML = `Published. <a href="#share/${encodeURIComponent(id)}">View live listing</a> · <a href="#${feed}">Browse published listings</a> · <button type="button" class="text-button" data-copy-listing="${escapeHtml(id)}">Copy public link</button>`;
+        status.innerHTML = `Published. <a href="${escapeHtml(listingViewLink(id))}">View live listing</a> · <a href="#${feed}">Browse published listings</a> · <button type="button" class="text-button" data-copy-listing="${escapeHtml(id)}">Copy public link</button> · <a href="${escapeHtml(whatsappListingLink(id))}" target="_blank" rel="noopener">WhatsApp</a>`;
       } else {
         status.textContent = 'Private draft saved. Open it under Your posts to add photos or publish.';
       }
@@ -596,7 +626,9 @@ document.addEventListener('submit', async event => {
     if (response.status === 429) throw new Error('Too many enquiries. Please try again later.');
     if (!response.ok) throw new Error('We couldn’t send your enquiry. Please try again.');
     form.reset();
-    status.textContent = 'Enquiry received. The Sainik Space team will follow up.';
+    status.textContent = data.has('listingId')
+      ? 'Quote request received. The Sainik Space team will follow up.'
+      : 'Enquiry received. The Sainik Space team will follow up.';
   } catch (error) {
     const target = form.isConnected ? status : document.querySelector('#staff-auth-status');
     if (target) target.textContent = savedToDatabase ? 'Saved as a private draft. ' + (error.message === 'Add a photo before publication' ? 'Add a photo, then select Publish listing again.' : error.message + ' You can retry here or reopen it from Your posts.') : error.message;

@@ -44,6 +44,11 @@ state.photoUrl = async function(path) {
   const data = await state.result(client.storage.from('property-photos').createSignedUrl(path, 60));
   return data.signedUrl;
 };
+state.nextPhotoPosition = async function(propertyId) {
+  const [lastPhoto] = await state.result(client.from('property_photos').select('position')
+    .eq('property_id', propertyId).order('position', {ascending:false}).limit(1));
+  return (lastPhoto?.position ?? -1) + 1;
+};
 state.photoUpload = async function(propertyId, file, position) {
   if (!state.user) throw new Error('Sign in to upload a photo.');
   if (!['image/jpeg','image/png','image/webp'].includes(file.type)) throw new Error('Choose a JPEG, PNG or WebP image.');
