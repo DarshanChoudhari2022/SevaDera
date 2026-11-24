@@ -95,7 +95,11 @@ function renderMarketPage(route, load) {
   const version = ++marketRenderVersion;
   const current = () => version === marketRenderVersion && currentRoute() === route;
   app.innerHTML = header() + '<main class="section"><p role="status">Loading…</p></main>';
-  load().then(html => { if (current()) app.innerHTML = html; }).catch(() => {
+  load().then(html => {
+    if (!current()) return;
+    app.innerHTML = html;
+    mountListingGallery(app.querySelector('[data-listing-gallery]'));
+  }).catch(() => {
     if (current()) app.innerHTML = header() + '<main class="section"><h2>Couldn’t load this page</h2><p>Please try again shortly.</p></main>' + footer();
   });
 }
@@ -185,6 +189,50 @@ function recordMarketVisit(listing) {
   } catch { /* Browser storage is optional. */ }
 }
 
+function listingGallery(photos) {
+  if (!photos.length) return '<p>Photos are unavailable for this listing.</p>';
+  if (photos.length === 1) return `<div class="market-gallery"><div class="listing-slide">${photos[0]}</div></div>`;
+  return `<section class="market-gallery" data-listing-gallery aria-label="Listing photos">
+    <div class="listing-track" tabindex="0" role="group" aria-label="Photos. Use the left and right arrow keys to browse.">
+      ${photos.map((photo, index) => `<div class="listing-slide" role="group" aria-label="Photo ${index + 1} of ${photos.length}">${photo}</div>`).join('')}
+    </div>
+    <div class="listing-gallery-controls">
+      <button type="button" data-gallery-step="-1" aria-label="Previous photo" disabled>‹</button>
+      <output aria-live="polite">1 / ${photos.length}</output>
+      <button type="button" data-gallery-step="1" aria-label="Next photo">›</button>
+    </div>
+  </section>`;
+}
+
+function mountListingGallery(gallery) {
+  if (!gallery) return;
+  const track = gallery.querySelector('.listing-track');
+  const previous = gallery.querySelector('[data-gallery-step="-1"]');
+  const next = gallery.querySelector('[data-gallery-step="1"]');
+  const counter = gallery.querySelector('output');
+  const count = track.children.length;
+  let index = 0;
+  function move(step) {
+    const target = Math.min(count - 1, Math.max(0, index + step));
+    track.scrollTo({left:target * track.clientWidth});
+  }
+  previous.addEventListener('click', () => move(-1));
+  next.addEventListener('click', () => move(1));
+  track.addEventListener('scroll', () => {
+    const visible = Math.min(count - 1, Math.max(0, Math.round(track.scrollLeft / track.clientWidth)));
+    if (visible === index) return;
+    index = visible;
+    counter.textContent = `${index + 1} / ${count}`;
+    previous.disabled = index === 0;
+    next.disabled = index === count - 1;
+  }, {passive:true});
+  track.addEventListener('keydown', event => {
+    if (!['ArrowLeft','ArrowRight'].includes(event.key)) return;
+    event.preventDefault();
+    move(event.key === 'ArrowLeft' ? -1 : 1);
+  });
+}
+
 async function sharedPage(slug) {
   const listing = await cloud.listings.publicBySlug(decodeURIComponent(slug));
   if (!listing) return header() + '<main class="section"><h2>Listing unavailable</h2></main>' + footer();
@@ -192,12 +240,21 @@ async function sharedPage(slug) {
   const label = listingLabel(listing.listing_kind);
   const title = marketplaceTitle(listing);
   const photos = await Promise.all((listing.photos || []).map((path,index) => listingPhoto(path, label + ', photo ' + (index+1))));
-  return `${header()}<main class="section market-page">
-    <p class="eyebrow">${label}</p>
-    <h1>${escapeHtml(title)}</h1>
-    <p>${escapeHtml(listing.area)}, Pune · ${marketplaceFacts(listing)}</p>
-    ${listing.public_description ? `<p class="listing-description">${escapeHtml(listing.public_description)}</p>` : ''}
-    <div class="market-gallery">${photos.join('') || '<p>Photos are unavailable for this listing.</p>'}</div>
+  const details = [
+    ['Neighbourhood', `${listing.area}, Pune`],
+    ['Layout', listing.bedrooms ? `${listing.bedrooms} BHK` : ''],
+    ['Size', listing.size_sqft ? `${Number(listing.size_sqft).toLocaleString('en-IN')} sq ft` : ''],
+    ['Furnishing', listing.furnishing]
+  ].filter(([, value]) => value);
+  return `${header()}<main class="section market-page listing-detail">
+    <div class="listing-intro">
+      <p class="eyebrow">${label}</p>
+      <h1>${escapeHtml(title)}</h1>
+      ${Number.isInteger(listing.rent) ? `<p class="listing-price"><strong>${money(listing.rent)}</strong>${listing.listing_kind === 'home' ? ' <span>/ month</span>' : ''}</p>` : ''}
+      <dl class="listing-facts">${details.map(([name,value]) => `<div><dt>${name}</dt><dd>${escapeHtml(value)}</dd></div>`).join('')}</dl>
+    </div>
+    ${listingGallery(photos)}
+    ${listing.public_description ? `<section class="listing-about"><h2>About this listing</h2><p class="listing-description">${escapeHtml(listing.public_description)}</p></section>` : ''}
     <section class="market-contact" aria-label="Request a quote">
       <h2>Request a quote</h2>
       <p>Ask about price, availability or a viewing. Sainik Space will follow up using the details you provide.</p>

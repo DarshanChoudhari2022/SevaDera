@@ -174,6 +174,23 @@ async function main() {
   }
   await waitFor(() => viewer.window.document.querySelectorAll('.market-gallery img').length === 2, 'signed-out listing gallery');
   assert.equal(viewer.window.document.querySelector('main h1').textContent, home.title);
+  const carousel = viewer.window.document.querySelector('[data-listing-gallery]');
+  const track = carousel.querySelector('.listing-track');
+  const previous = carousel.querySelector('[data-gallery-step="-1"]');
+  const next = carousel.querySelector('[data-gallery-step="1"]');
+  Object.defineProperty(track, 'clientWidth', {value:360});
+  track.scrollTo = ({left}) => {
+    track.scrollLeft = left;
+    track.dispatchEvent(new viewer.window.Event('scroll'));
+  };
+  assert.ok(previous.disabled);
+  next.click();
+  assert.equal(carousel.querySelector('output').textContent,'2 / 2');
+  assert.ok(next.disabled);
+  track.dispatchEvent(new viewer.window.KeyboardEvent('keydown',{key:'ArrowLeft'}));
+  assert.equal(carousel.querySelector('output').textContent,'1 / 2');
+  assert.ok(previous.disabled);
+  assert.match(viewer.window.document.querySelector('.listing-price').textContent,/₹18,000/);
   assert.equal(viewer.window.document.querySelector('.market-contact button').textContent, 'Request a quote');
   assert.equal(viewer.window.seva.user, null);
   const visitor = viewer.window.localStorage.getItem('seva-marketplace-visitor');

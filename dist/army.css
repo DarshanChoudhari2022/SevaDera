@@ -20,8 +20,37 @@
 .market-card-body p { margin: 0; }
 .market-photo { display: block; width: 100%; height: auto; border-radius: 8px; }
 .market-card .market-photo { aspect-ratio: 4 / 3; object-fit: cover; border-radius: 0; }
-.market-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 310px), 1fr)); gap: 1rem; }
-.market-gallery img { max-height: 540px; object-fit: contain; background: #f5f5ef; }
+.listing-detail { gap: clamp(1.2rem, 3vw, 2.25rem); }
+.listing-intro { display: grid; gap: .65rem; }
+.listing-intro .eyebrow { font-weight: 650; color: #556348; }
+.listing-detail h1 { margin: 0; font-size: clamp(2.15rem, 6vw, 4.25rem); font-weight: 750; line-height: 1.06; overflow-wrap: anywhere; }
+.listing-detail .listing-price { display: flex; flex-wrap: wrap; align-items: baseline; gap: .45rem; color: #35452c; }
+.listing-price strong { font-size: clamp(1.85rem, 4vw, 2.75rem); font-weight: 750; letter-spacing: -.04em; }
+.listing-price span { font-size: 1rem; font-weight: 600; }
+.listing-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr)); gap: .65rem; margin: .25rem 0 0; }
+.listing-facts > div { padding: .8rem .95rem; border: 1px solid #dde4d5; border-radius: 10px; background: #f5f7ef; }
+.listing-facts dt { color: #535e4c; font-size: .82rem; font-weight: 600; }
+.listing-facts dd { margin: .2rem 0 0; font-size: clamp(1rem, 2vw, 1.28rem); font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; }
+.listing-about h2 { margin: 0 0 .55rem; font-weight: 700; }
+.listing-about .listing-description { font-size: clamp(1.05rem, 2vw, 1.22rem); line-height: 1.6; }
+.market-gallery { position: relative; min-width: 0; border-radius: 14px; background: #eef1e8; }
+.listing-track { display: flex; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scroll-behavior: smooth; scrollbar-width: none; border-radius: inherit; }
+.listing-track::-webkit-scrollbar { display: none; }
+.listing-track:focus-visible { outline: 2px solid #556348; outline-offset: 3px; }
+.listing-slide { display: grid; place-items: center; flex: 0 0 100%; min-width: 0; height: clamp(15rem, 64vw, 34rem); scroll-snap-align: start; }
+.listing-slide img { height: 100%; min-height: 0; object-fit: contain; border-radius: inherit; }
+.listing-gallery-controls { position: absolute; inset-inline: .6rem; bottom: .6rem; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; pointer-events: none; }
+.listing-gallery-controls :is(button, output) { color: white; background: #222a20; border-radius: 999px; box-shadow: 0 1px 7px #0003; }
+.listing-gallery-controls button { width: 44px; height: 44px; display: grid; place-items: center; border: 0; font-size: 1.65rem; line-height: 1; cursor: pointer; pointer-events: auto; }
+.listing-gallery-controls button:last-child { justify-self: end; }
+.listing-gallery-controls button:disabled { cursor: default; opacity: .55; }
+.listing-gallery-controls output { padding: .38rem .8rem; font-size: .9rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { .listing-track { scroll-behavior: auto; } }
+@media (max-width: 540px) {
+  .listing-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .listing-facts > div { padding: .7rem; }
+  .listing-slide { height: clamp(16rem, 86vw, 26rem); }
+}
 .market-contact { padding: clamp(1rem, 4vw, 2rem); background: #eff8d4; border-radius: 12px; overflow-wrap: anywhere; }
 .market-moderation-photos { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .75rem; }
 .market-moderation-photos img { width: min(100%, 360px); }
